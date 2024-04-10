@@ -15,22 +15,25 @@ background = pygame.image.load(background_image).convert()
 last_posA = 0
 last_posB = 0
 nba, nbb = 24, 24
-plateau = [4,4,4,4,4,4,4,4,4,4,4,4]
+plateau_jeu = [4,4,4,4,4,4,4,4,4,4,4,4]
+plateau_visu = plateau_jeu
 run = nba!=0 and nbb!=0
 tour = True
 def affichage():
     for i in range(6):
+        plateau_visu  = plateau_jeu[:6]+plateau_jeu[12:5:-1]
         pygame.draw.circle(background, (250, 250, 0), (70+i*100, 130), 35)
         pygame.draw.circle(background, (250, 250, 0), (70 + i * 100, 330), 35)
+        print(plateau_visu)
 
 def repartition(num):
-    contenu = plateau[num]
+    contenu = plateau_jeu[num]
     i=0
-    while plateau[num]!=0:
-        plateau[(num + i) % 12] += 1
-        plateau[(num) % 12] -= 1
+    while plateau_jeu[num]!=0:
+        plateau_jeu[(num + i) % 12] += 1
+        plateau_jeu[(num) % 12] -= 1
         i=(i-1)%12
-    print(plateau[:6],plateau[12:5:-1])
+
 num = ''
 while run:
 
@@ -38,7 +41,6 @@ while run:
         if event.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             print(pos)
-
 
             if 34<pos[0]<105 :
                 if 95<pos[1]<165:
@@ -71,9 +73,6 @@ while run:
                 elif 296<pos[1]<366:
                     repartition(6)
 
-
-        if event.type == pygame.QUIT:
-            run = False
         '''if event.type == pygame.KEYDOWN and len(str(num))<2:
 
             if event.key == pygame.K_1:
