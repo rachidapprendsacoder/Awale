@@ -1,116 +1,133 @@
-import bot
-#import
-background_image = "47343047c5_105832_ciel-bleu-01.jpg"
+import pyxel
+
+screen_size_x, screen_size_y = 300,200
 
 
-import pygame
-from pygame.locals import *
 
-pygame.init()
-screen = pygame.display.set_mode((640, 455))
+class App:
+    def __init__(self):
+        pyxel.init(screen_size_x, screen_size_y)
+        pyxel.load('res.pyxres')
 
-pygame.display.set_caption("Awalé 2.0")
-background = pygame.image.load(background_image).convert()
+        self.scoreA, self.scoreB = 0, 0
+        self.last_posA, self.last_posB = 0, 0
+        self.run = self.scoreA != 24 or self.scoreB != 24
+        self.tour = True
+        pyxel.mouse(True)
+        self.plateau_visu = self.plateau_jeu = [4,4,4,4,4,4,4,4,4,4,4,4]
 
-last_posA = 0
-last_posB = 0
-nba, nbb = 24, 24
-plateau_jeu = [4,4,4,4,4,4,4,4,4,4,4,4]
-plateau_visu = plateau_jeu
-run = nba!=0 and nbb!=0
-tour = True
-def affichage():
-    for i in range(6):
-        plateau_visu  = plateau_jeu[:6]+plateau_jeu[12:5:-1]
-        pygame.draw.circle(background, (250, 250, 0), (70+i*100, 130), 35)
-        pygame.draw.circle(background, (250, 250, 0), (70 + i * 100, 330), 35)
-        print(plateau_visu)
+    def repartition(self,num):
+        contenu = self.plateau_jeu[num]
+        i = 0
+        while self.plateau_jeu[num] != 0:
+            self.plateau_jeu[(num + i) % 12] += 1
+            self.plateau_jeu[(num) % 12] -= 1
+            i = (i - 1) % 12
+        print()
+        if 2 <= self.plateau_jeu[(num+i+1)%12] <=3:
+            print('ohb')
+            self.recuperation_graines((num+i+1)%12)
 
-def repartition(num):
-    contenu = plateau_jeu[num]
-    i=0
-    while plateau_jeu[num]!=0:
-        plateau_jeu[(num + i) % 12] += 1
-        plateau_jeu[(num) % 12] -= 1
-        i=(i-1)%12
+    def recuperation_graines(self,num):
+        i = num
+        global nba, nbb
+        while 2 <= self.plateau_jeu[i] <= 3:
+            if self.tour:
+                self.scoreA += self.plateau_jeu[i]
+            else:
+                self.scoreB += self.plateau_jeu[i]
+            self.plateau_jeu[i] = 0
+            i = (i+1)%12
 
-num = ''
-while run:
+    def start(self):
+        pyxel.run(self.update, self.draw)
+    def update(self):
+        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT) and pyxel.frame_count%3==0:
+            pos = pyxel.mouse_x, pyxel.mouse_y
 
-    for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONUP:
-            pos = pygame.mouse.get_pos()
-            print(pos)
+            for i in range(6):
+                if 30+i*40 < pos[0] < 62+i*40:
+                    if 40 < pos[1] < 72:
+                        self.repartition(i)
+                        if self.tour:
+                            self.last_posA = i
+                        else:
+                            self.last_posB = i
+                        self.tour = not self.tour
+                    elif 110 < pos[1] < 140:
+                        self.repartition(11-i)
+                        if self.tour:
+                            self.last_posA = 11-i
+                        else:
+                            self.last_posB = 11-i
+                        self.tour = not self.tour
+            print(self.plateau_jeu)
 
-            if 34<pos[0]<105 :
-                if 95<pos[1]<165:
-                    repartition(0)
-                elif 296<pos[1]<366:
-                    repartition(11)
-            if 135<pos[0]<206 :
-                if 95<pos[1]<165:
-                    repartition(1)
-                elif 296<pos[1]<366:
-                    repartition(10)
-            if 235<pos[0]<306 :
-                if 95<pos[1]<165:
-                    repartition(2)
-                elif 296<pos[1]<366:
-                    repartition(9)
-            if 335<pos[0]<406 :
-                if 95<pos[1]<165:
-                    repartition(3)
-                elif 296<pos[1]<366:
-                    repartition(8)
-            if 435<pos[0]<506 :
-                if 95<pos[1]<165:
-                    repartition(4)
-                elif 296<pos[1]<366:
-                    repartition(7)
-            if 535<pos[0]<606 :
-                if 95<pos[1]<165:
-                    repartition(5)
-                elif 296<pos[1]<366:
-                    repartition(6)
+            '''if 30 < pos[0] < 62:
+                if 40 < pos[1] < 72:
+                    self.repartition(0)
+                    if self.tour:
+                        self.last_posA=0
+                    else:
+                        self.last_posB=0
+                    self.tour = not self.tour
 
-        '''if event.type == pygame.KEYDOWN and len(str(num))<2:
+                elif 110 < pos[1] < 140:
+                    self.repartition(11)
+                    self.tour = not self.tour
+            if 70 < pos[0] < 102:
+                if 40 < pos[1] < 72:
+                    self.repartition(1)
+                    self.tour = not self.tour
+                elif 110 < pos[1] < 140:
+                    self.repartition(10)
+                    self.tour = not self.tour
+            if 110 < pos[0] < 142:
+                if 40 < pos[1] < 72:
+                    self.repartition(2)
+                    self.tour = not self.tour
+                elif 110 < pos[1] < 140:
+                    self.repartition(9)
+                    self.tour = not self.tour
+            if 150 < pos[0] < 182:
+                if 40 < pos[1] < 72:
+                    self.repartition(3)
+                    self.tour = not self.tour
+                elif 110 < pos[1] < 140:
+                    self.repartition(8)
+                    self.tour = not self.tour
+            if 190 < pos[0] < 222:
+                if 40 < pos[1] < 72:
+                    self.repartition(4)
+                elif 110 < pos[1] < 140:
+                    self.repartition(7)
+                    self.tour = not self.tour
+            if 230 < pos[0] < 262:
+                if 40 < pos[1] < 72:
+                    self.repartition(5)
+                    self.tour = not self.tour
+                elif 110 < pos[1] < 140:
+                    self.repartition(6)
+                    self.tour = not self.tour'''
+    def draw(self):
+        pyxel.cls(2)
 
-            if event.key == pygame.K_1:
-                num=num+'1'
-            elif event.key == pygame.K_2:
-                num=num+'2'
-            elif event.key == pygame.K_3:
-                num+='3'
-            elif event.key == pygame.K_4:
-                num+='4'
-            elif event.key == pygame.K_5:
-                num+='5'
-            elif event.key == pygame.K_6:
-                num+='6'
-            elif event.key == pygame.K_7:
-                num+='7'
-            elif event.key == pygame.K_8:
-                num+='8'
-            elif event.key == pygame.K_9:
-                num+='9'
-            elif event.key == pygame.K_0:
-                num+='0'
-                print(num)
+        #Dessin du player
+        if self.tour:
+            pyxel.blt(10,10,0,0,32,224,16,0)
+        else:
+            pyxel.blt(10, 150, 0, 0, 48, 224, 16, 0)
+        self.plateau_visu = self.plateau_jeu[:6] , self.plateau_jeu[12:5:-1]
+        pyxel.rect(25,35,240,110,5)
+        pyxel.line(25,90,264,90,7)
+        pyxel.text(10,80,str(self.scoreA),7)
+        pyxel.text(280, 80, str(self.scoreB), 7)
+        # Dessin des trous du plateau
+        for i in range(6):
+            for j in range(2):
+                pyxel.blt(30+i*40,40+70*j,0,0,0,32,32,0)
+                pyxel.text(40+i*40,55+70*j,str(self.plateau_visu[j][i]),8)
 
-            elif event.key == pygame.KSCAN_DELETE :
-                num-=num[len(num)]
-                print(num)
-            elif event.key == pygame.K_RETURN:
-                print(num)
-                repartition(int(num))
-                num='''''
-        affichage()
-        screen.fill((0, 0, 0))
-        screen.blit(background, (0, 0))
-        pygame.display.update()
-    tour = not tour
 
-pygame.quit()
-quit()
-#jeu
-
+jeu = App()
+jeu.start()
