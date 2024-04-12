@@ -14,8 +14,15 @@ class App:
         self.run = self.scoreA != 24 or self.scoreB != 24
         self.tour = True
         pyxel.mouse(True)
-        self.plateau_visu = self.plateau_jeu = [4,4,4,4,4,4,4,4,4,4,4,4]
+        self.plateau_visu = self.plateau_jeu = [4,4,4,4,4,4,1,0,0,0,0,0]
 
+    def nourrissage(self):
+        if self.plateau_jeu[6:12]==[0,0,0,0,0,0]:
+            print(5)
+            for i in range(6):
+                if self.plateau_jeu[i]!=0:
+                    self.repartition(i)
+                    break
     def repartition(self,num):
         contenu = self.plateau_jeu[num]
         i = 0
@@ -23,18 +30,17 @@ class App:
             self.plateau_jeu[(num + i) % 12] += 1
             self.plateau_jeu[(num) % 12] -= 1
             i = (i - 1) % 12
-        print()
         if 2 <= self.plateau_jeu[(num+i+1)%12] <=3:
             print('ohb')
             self.recuperation_graines((num+i+1)%12)
+        self.nourrissage()
 
     def recuperation_graines(self,num):
         i = num
-        global nba, nbb
         while 2 <= self.plateau_jeu[i] <= 3:
-            if self.tour:
+            if self.tour and 6<i<11:
                 self.scoreA += self.plateau_jeu[i]
-            else:
+            elif not self.tour and 0<i<5:
                 self.scoreB += self.plateau_jeu[i]
             self.plateau_jeu[i] = 0
             i = (i+1)%12
@@ -46,63 +52,22 @@ class App:
             pos = pyxel.mouse_x, pyxel.mouse_y
 
             for i in range(6):
+
+                #if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
                 if 30 + i * 40 < pos[0] < 62 + i * 40:
+
                     if 40 < pos[1] < 72 and self.tour:  # Vérifie le tour du joueur
                         self.repartition(i)
                         self.last_posA = i
                         self.tour = not self.tour
-                    elif 110 < pos[1] < 140 and not self.tour:  # Vérifie le tour du joueur
+                        break
+
+                    elif 110 < pos[1] < 140 and not self.tour :  # Vérifie le tour du joueur
                         self.repartition(11 - i)
                         self.last_posB = 11 - i
                         self.tour = not self.tour
+                        break
 
-
-            '''if 30 < pos[0] < 62:
-                if 40 < pos[1] < 72:
-                    self.repartition(0)
-                    if self.tour:
-                        self.last_posA=0
-                    else:
-                        self.last_posB=0
-                    self.tour = not self.tour
-
-                elif 110 < pos[1] < 140:
-                    self.repartition(11)
-                    self.tour = not self.tour
-            if 70 < pos[0] < 102:
-                if 40 < pos[1] < 72:
-                    self.repartition(1)
-                    self.tour = not self.tour
-                elif 110 < pos[1] < 140:
-                    self.repartition(10)
-                    self.tour = not self.tour
-            if 110 < pos[0] < 142:
-                if 40 < pos[1] < 72:
-                    self.repartition(2)
-                    self.tour = not self.tour
-                elif 110 < pos[1] < 140:
-                    self.repartition(9)
-                    self.tour = not self.tour
-            if 150 < pos[0] < 182:
-                if 40 < pos[1] < 72:
-                    self.repartition(3)
-                    self.tour = not self.tour
-                elif 110 < pos[1] < 140:
-                    self.repartition(8)
-                    self.tour = not self.tour
-            if 190 < pos[0] < 222:
-                if 40 < pos[1] < 72:
-                    self.repartition(4)
-                elif 110 < pos[1] < 140:
-                    self.repartition(7)
-                    self.tour = not self.tour
-            if 230 < pos[0] < 262:
-                if 40 < pos[1] < 72:
-                    self.repartition(5)
-                    self.tour = not self.tour
-                elif 110 < pos[1] < 140:
-                    self.repartition(6)
-                    self.tour = not self.tour'''
     def draw(self):
         pyxel.cls(2)
 
