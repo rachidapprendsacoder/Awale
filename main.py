@@ -46,22 +46,16 @@ class App:
             pos = pyxel.mouse_x, pyxel.mouse_y
 
             for i in range(6):
-                if 30+i*40 < pos[0] < 62+i*40:
-                    if 40 < pos[1] < 72:
+                if 30 + i * 40 < pos[0] < 62 + i * 40:
+                    if 40 < pos[1] < 72 and self.tour:  # Vérifie le tour du joueur
                         self.repartition(i)
-                        if self.tour:
-                            self.last_posA = i
-                        else:
-                            self.last_posB = i
+                        self.last_posA = i
                         self.tour = not self.tour
-                    elif 110 < pos[1] < 140:
-                        self.repartition(11-i)
-                        if self.tour:
-                            self.last_posA = 11-i
-                        else:
-                            self.last_posB = 11-i
+                    elif 110 < pos[1] < 140 and not self.tour:  # Vérifie le tour du joueur
+                        self.repartition(11 - i)
+                        self.last_posB = 11 - i
                         self.tour = not self.tour
-            print(self.plateau_jeu)
+
 
             '''if 30 < pos[0] < 62:
                 if 40 < pos[1] < 72:
@@ -127,6 +121,13 @@ class App:
             for j in range(2):
                 pyxel.blt(26+i*40,40+70*j,0,0,0,32,32,0)
                 pyxel.text(40+i*40,55+70*j,str(self.plateau_visu[j][i]),8)
+
+        if self.scoreA >= 24 or self.scoreB >= 24:
+            if self.scoreA > self.scoreB:
+                pyxel.text(110,80,"Le Robot a gagne !",7)
+            else:
+                pyxel.text(110, 80, "Le Joueur a gagne !",7)
+
 
 
 jeu = App()
