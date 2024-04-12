@@ -14,7 +14,7 @@ class App:
         self.run = self.scoreA != 24 or self.scoreB != 24
         self.tour = True
         pyxel.mouse(True)
-        self.plateau_visu = self.plateau_jeu = [4,4,4,4,4,4,1,0,0,0,0,0]
+        self.plateau_visu = self.plateau_jeu = [1,1,0,0,0,0,2,0,0,0,2,1]
 
     def nourrissage(self):
         if self.plateau_jeu[6:12]==[0,0,0,0,0,0]:
@@ -33,16 +33,17 @@ class App:
         if 2 <= self.plateau_jeu[(num+i+1)%12] <=3:
             print('ohb')
             self.recuperation_graines((num+i+1)%12)
-        self.nourrissage()
+        #self.nourrissage()
 
     def recuperation_graines(self,num):
         i = num
-        while 2 <= self.plateau_jeu[i] <= 3:
-            if self.tour and 6<i<11:
+        while self.plateau_jeu[i] in [2,3]:
+            if self.tour and 6<=i<=11:
                 self.scoreA += self.plateau_jeu[i]
-            elif not self.tour and 0<i<5:
+                self.plateau_jeu[i] = 0
+            elif not self.tour and 0<=i<=5:
                 self.scoreB += self.plateau_jeu[i]
-            self.plateau_jeu[i] = 0
+                self.plateau_jeu[i] = 0
             i = (i+1)%12
 
     def start(self):
