@@ -1,4 +1,5 @@
 import pyxel
+import bot
 
 screen_size_x, screen_size_y = 300,200
 
@@ -70,30 +71,41 @@ class App:
 
     def start(self):
         pyxel.run(self.update, self.draw)
+    def player_control(self):
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            pos = pyxel.mouse_x, pyxel.mouse_y
+            if 110 < pos[1] < 142:
+                for i in range(6):
+
+                    # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
+                    if 30 + i * 40 < pos[0] < 62 + i * 40:
+                        return i
+    def in_game(self,choix):
+        if choix is not None:
+            print("super choix:"+str(choix))
+            if self.tour:  # Vérifie le tour du joueur
+                self.repartition(choix)
+
+            elif not self.tour:  # Vérifie le tour du joueur
+                self.repartition(11 - choix)
+            self.tour = not self.tour
+    def get_game(self):
+        return self.plateau_visu, self.tour, self.scoreA,self.scoreB
+    def init_button(self):
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
+                self.initialise()
     def update(self):
         if self.run:
             #On commence par vérifier si l'un des joueurs n'est pas affamé
             self.nourrissage()
-            if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT) and pyxel.frame_count%3==0:
-                pos = pyxel.mouse_x, pyxel.mouse_y
-                for i in range(6):
 
-                    #if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
-                    if 30 + i * 40 < pos[0] < 62 + i * 40:
+            if self.tour:
+                self.in_game(bot.bot_random_move(self.get_game()))
+            else:
+                self.in_game(self.player_control())
 
-                        if 40 < pos[1] < 72 and self.tour:  # Vérifie le tour du joueur
-                            self.repartition(i)
-                            self.last_posA = i
-                            self.tour = not self.tour
-                            break
-
-                        elif 110 < pos[1] < 140 and not self.tour :  # Vérifie le tour du joueur
-                            self.repartition(11 - i)
-                            self.last_posB = 11 - i
-                            self.tour = not self.tour
-                            break
-                if 10<pos[0]<30 and 10<pos[1]<15:
-                    self.initialise()
+            self.init_button()
         else:
             #Récupération des graines manquantes sur le plateau
             for i in range(6):
@@ -130,7 +142,7 @@ class App:
             else:
                 pyxel.text(110, 80, "Le Joueur a gagne !",7)
 
-
+print(bot.bot_random_move(0))
 
 jeu = App()
 jeu.start()
