@@ -18,6 +18,7 @@ class App:
         self.plateau_visu = self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
 
     def nourrissage(self):
+        #Si joueur n'a plus de graine et que c'est le tour du bot
         if self.plateau_jeu[6:12]==[0,0,0,0,0,0] and self.tour :
             print(5)
             for i in range(6):
@@ -27,30 +28,32 @@ class App:
                     self.repartition(i)
                     self.tour = not self.tour
                     break
+
+        #s'il n'a tjrs pas de graine mais que c'est à son tour
         elif self.plateau_jeu[6:12]==[0,0,0,0,0,0] and not self.tour :
             self.run = False
 
-
+        #Si bot n'a plus de graines et que tour au joueur
         elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and not self.tour:
             print(5)
             for i in range(5,11):
-
                 if self.plateau_jeu[i] != 0:
                     print(74)
                     self.repartition(i)
                     self.tour = not self.tour
                     break
+        #Si bot tjrs pas de graine
         elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and self.tour :
             self.run = False
 
     def repartition(self,num):
         i = 0
+        # Tant que la case où on puise les graines est pleine, on remplit
         while self.plateau_jeu[num] != 0:
             self.plateau_jeu[(num + i) % 12] += 1
             self.plateau_jeu[(num) % 12] -= 1
             i = (i - 1) % 12
-        if 2 <= self.plateau_jeu[(num+i+1)%12] <=3:
-            print('ohb')
+        if self.plateau_jeu[(num+i+1)%12] in [2,3]:
             self.recuperation_graines((num+i+1)%12)
 
 
@@ -69,6 +72,7 @@ class App:
         pyxel.run(self.update, self.draw)
     def update(self):
         if self.run:
+            #On commence par vérifier si l'un des joueurs n'est pas affamé
             self.nourrissage()
             if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT) and pyxel.frame_count%3==0:
                 pos = pyxel.mouse_x, pyxel.mouse_y
@@ -90,6 +94,15 @@ class App:
                             break
                 if 10<pos[0]<30 and 10<pos[1]<15:
                     self.initialise()
+        else:
+            #Récupération des graines manquantes sur le plateau
+            for i in range(6):
+                self.scoreA+=self.plateau_jeu[i]
+                self.plateau_jeu[i]=0
+            for i in range(6,12):
+                self.scoreB+=self.plateau_jeu[i]
+                self.plateau_jeu[i] = 0
+
     def draw(self):
         pyxel.cls(2)
 
