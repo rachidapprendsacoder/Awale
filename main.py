@@ -7,24 +7,43 @@ screen_size_x, screen_size_y = 300,200
 class App:
     def __init__(self):
         pyxel.init(screen_size_x, screen_size_y)
-        pyxel.load('res.pyxres')
-
+        pyxel.load('res2.pyxres')
+        pyxel.mouse(True)
+        self.initialise()
+    def initialise(self):
         self.scoreA, self.scoreB = 0, 0
         self.last_posA, self.last_posB = 0, 0
-        self.run = self.scoreA != 24 or self.scoreB != 24
+        self.run = True
         self.tour = True
-        pyxel.mouse(True)
-        self.plateau_visu = self.plateau_jeu = [1,1,0,0,0,0,2,0,0,0,2,1]
+        self.plateau_visu = self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
 
     def nourrissage(self):
-        if self.plateau_jeu[6:12]==[0,0,0,0,0,0]:
+        if self.plateau_jeu[6:12]==[0,0,0,0,0,0] and self.tour :
             print(5)
             for i in range(6):
+
                 if self.plateau_jeu[i]!=0:
+                    print(74)
                     self.repartition(i)
+                    self.tour = not self.tour
                     break
+        elif self.plateau_jeu[6:12]==[0,0,0,0,0,0] and not self.tour :
+            self.run = False
+
+
+        elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and not self.tour:
+            print(5)
+            for i in range(5,11):
+
+                if self.plateau_jeu[i] != 0:
+                    print(74)
+                    self.repartition(i)
+                    self.tour = not self.tour
+                    break
+        elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and self.tour :
+            self.run = False
+
     def repartition(self,num):
-        contenu = self.plateau_jeu[num]
         i = 0
         while self.plateau_jeu[num] != 0:
             self.plateau_jeu[(num + i) % 12] += 1
@@ -33,7 +52,7 @@ class App:
         if 2 <= self.plateau_jeu[(num+i+1)%12] <=3:
             print('ohb')
             self.recuperation_graines((num+i+1)%12)
-        #self.nourrissage()
+
 
     def recuperation_graines(self,num):
         i = num
@@ -49,26 +68,28 @@ class App:
     def start(self):
         pyxel.run(self.update, self.draw)
     def update(self):
-        if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT) and pyxel.frame_count%3==0:
-            pos = pyxel.mouse_x, pyxel.mouse_y
+        if self.run:
+            self.nourrissage()
+            if pyxel.btn(pyxel.MOUSE_BUTTON_LEFT) and pyxel.frame_count%3==0:
+                pos = pyxel.mouse_x, pyxel.mouse_y
+                for i in range(6):
 
-            for i in range(6):
+                    #if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
+                    if 30 + i * 40 < pos[0] < 62 + i * 40:
 
-                #if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
-                if 30 + i * 40 < pos[0] < 62 + i * 40:
+                        if 40 < pos[1] < 72 and self.tour:  # Vérifie le tour du joueur
+                            self.repartition(i)
+                            self.last_posA = i
+                            self.tour = not self.tour
+                            break
 
-                    if 40 < pos[1] < 72 and self.tour:  # Vérifie le tour du joueur
-                        self.repartition(i)
-                        self.last_posA = i
-                        self.tour = not self.tour
-                        break
-
-                    elif 110 < pos[1] < 140 and not self.tour :  # Vérifie le tour du joueur
-                        self.repartition(11 - i)
-                        self.last_posB = 11 - i
-                        self.tour = not self.tour
-                        break
-
+                        elif 110 < pos[1] < 140 and not self.tour :  # Vérifie le tour du joueur
+                            self.repartition(11 - i)
+                            self.last_posB = 11 - i
+                            self.tour = not self.tour
+                            break
+                if 10<pos[0]<30 and 10<pos[1]<15:
+                    self.initialise()
     def draw(self):
         pyxel.cls(2)
 
@@ -87,8 +108,10 @@ class App:
             for j in range(2):
                 pyxel.blt(26+i*40,40+70*j,0,0,0,32,32,0)
                 pyxel.text(40+i*40,55+70*j,str(self.plateau_visu[j][i]),8)
-
-        if self.scoreA >= 24 or self.scoreB >= 24:
+        pyxel.text(10,10,'Reset',7)
+        if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
+            pyxel.text(10, 10, 'Reset', 10)
+        if not self.run:
             if self.scoreA > self.scoreB:
                 pyxel.text(110,80,"Le Robot a gagne !",7)
             else:
