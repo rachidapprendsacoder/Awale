@@ -99,7 +99,7 @@ class App:
         else:
             pyxel.blt(90, 150, 0, 0, 48, 224, 16, 0)
         self.plateau_visu = self.plateau_jeu[:6] , self.plateau_jeu[12:5:-1]
-        pyxel.rect(22,35,240,110,5)
+        pyxel.rect(22,35,240,110,4)
         pyxel.line(22,90,260,90,7)
         pyxel.text(10,80,str(self.scoreA),7)
         pyxel.text(280, 80, str(self.scoreB), 7)
@@ -107,7 +107,7 @@ class App:
         for i in range(6):
             for j in range(2):
                 pyxel.blt(26+i*40,40+70*j,0,0,0,32,32,0)
-                pyxel.text(40+i*40,55+70*j,str(self.plateau_visu[j][i]),8)
+                pyxel.text(40+i*40,54+70*j,str(self.plateau_visu[j][i]),8)
         pyxel.text(10,10,'Reset',7)
         if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
             pyxel.text(10, 10, 'Reset', 10)
