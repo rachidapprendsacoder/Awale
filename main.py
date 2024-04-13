@@ -126,8 +126,10 @@ class App:
         self.plateau_visu = self.plateau_jeu[:6] , self.plateau_jeu[12:5:-1]
         pyxel.rect(22,35,240,110,4)
         pyxel.line(22,90,260,90,7)
+        pyxel.text(2,90, 'Robot',7)
         pyxel.text(10,80,str(self.scoreA),7)
         pyxel.text(280, 80, str(self.scoreB), 7)
+        pyxel.text(270,90, 'Joueur',7)
         # Dessin des trous du plateau
         for i in range(6):
             for j in range(2):
