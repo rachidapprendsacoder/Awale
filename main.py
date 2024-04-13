@@ -1,5 +1,6 @@
 import pyxel
 import bot
+import random
 
 screen_size_x, screen_size_y = 300,200
 def repartition_sim(simulation, num):
@@ -173,6 +174,18 @@ class App:
 
                 pyxel.blt(26+i*40,40+70*j,0,0,0,32,32,0)
                 pyxel.text(40+i*40,54+70*j,str(self.plateau_visu[j][i]),8)
+
+                seeds_count = self.plateau_visu[j][i]
+                # Dessin de chaque graine dans le trou
+                for k in range(seeds_count):
+                    # Ajustement de la coordonnée y pour superposer les graines
+                    seed_x = 26 + i * 40 + (k % 3) * 10
+                    seed_y = 40 + 70 * j + (k // 3) * 5  # Ajustement de la coordonnée y
+                    # Dessin de la graine
+                    pyxel.blt(seed_x, seed_y, 0, 64, 0, 15, 15, 0)
+
+
+
 
 
         print(self.last_posB)
