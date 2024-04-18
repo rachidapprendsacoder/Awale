@@ -50,10 +50,12 @@ def value_game(situation):
             opp_attack_case += 1
 
     #value of position
+
+
     return owc*opp_weak_case - wc*weak_case + opp_chain_amount - chain_amount + attack_case*ac + opp_attack_case*oac + score_diff*sd
 def bot_move(situation):
-    print(situation)
+    #print(situation)
     time.sleep(1)
-    next_move = random.randint(1, 6)
-    print(value_game(situation))
+    next_move = random.randint(0, 5)
+    #print(value_game(situation))
     return next_move

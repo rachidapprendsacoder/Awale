@@ -2,6 +2,7 @@ import pyxel
 import bot
 import random
 
+
 screen_size_x, screen_size_y = 300,200
 def repartition_sim(simulation, num):
     i = 0
@@ -14,14 +15,46 @@ def repartition_sim(simulation, num):
     if simulation[0][(num+i+1)%12] in [2,3]:
         return recuperation_graines_sim((num+i+1)%12)
     return simulation
-def legal_moves(simulation):
+def legal_moves(simulation,joueur):
     #donne une liste de bon coup pour le joueur concerné
-    return
+    legal_moves = []
+    if joueur: #BOT
+        #If the player's hungry ...
+        if simulation[1] == [0, 0, 0, 0, 0, 0]:
+            #... We're looking for a full cell, nearest, forcing him to play this move
+            for i in range(6):
+                if simulation[0][i] != 0:
+                    legal_moves.append(i)
+                    return legal_moves
+        #If all goes well, we just look for cases which are not empty
+        else:
+            for i in range(6):
+                if simulation[0][i] != 0:
+                    legal_moves.append(i)
+            return legal_moves
+
+    else: #PLAYER
+        # If the bot's hungry ...
+        if simulation[1] == [0, 0, 0, 0, 0, 0]:
+            # We're looking for a full cell, the nearest one
+            for i in range(5,-1,-1):
+                if simulation[1][i] != 0:
+                    legal_moves.append(i)
+                    return legal_moves
+        # If all goes well, we just look for cases which are not empty
+        else:
+            for i in range(6):
+                if simulation[1][i] != 0:
+                    legal_moves.append(i)
+            return legal_moves
+
+
 def in_game_sim(simulation,choix):
     if choix is not None:
         tour = simulation[1]
         simulation[1] = not tour
         if tour:  # Vérifie le tour du joueur
+            legal_moves(simulation)
             return repartition_sim(choix)
 
         else:  # Vérifie le tour du joueur
@@ -49,16 +82,17 @@ class App:
         self.last_posA, self.last_posB = 0, 0
         self.run = True
         self.tour = True
-        self.plateau_visu = self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+        self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+        self.plateau_visu = [[4, 4, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4]]
 
     def nourrissage(self):
         #Si joueur n'a plus de graine et que c'est le tour du bot
         if self.plateau_jeu[6:12]==[0,0,0,0,0,0] and self.tour :
-            print(5)
+
             for i in range(6):
 
                 if self.plateau_jeu[i]!=0:
-                    print(74)
+
                     self.repartition(i)
                     self.tour = not self.tour
                     break
@@ -69,10 +103,10 @@ class App:
 
         #Si bot n'a plus de graines et que tour au joueur
         elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and not self.tour:
-            print(5)
+
             for i in range(5,11):
                 if self.plateau_jeu[i] != 0:
-                    print(74)
+
                     self.repartition(i)
                     self.tour = not self.tour
                     break
@@ -88,9 +122,9 @@ class App:
             self.plateau_jeu[(num + i) % 12] += 1
             self.plateau_jeu[(num) % 12] -= 1
             i = (i - 1) % 12
+
         if self.plateau_jeu[(num+i+1)%12] in [2,3]:
             self.recuperation_graines((num+i+1)%12)
-
 
     def recuperation_graines(self,num):
         i = num
@@ -110,16 +144,15 @@ class App:
             pos = pyxel.mouse_x, pyxel.mouse_y
             if 110 < pos[1] < 142:
                 for i in range(6):
-
                     # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
                     if 30 + i * 40 < pos[0] < 62 + i * 40:
-                        self.last_posB = i
-                        return i
+                        if i in legal_moves(self.plateau_visu,False):
+                            self.last_posB = i
+                            return i
     def in_game(self,choix):
         if choix is not None:
-            print("super choix:"+str(choix))
+            #print("super choix:"+str(choix))
             if self.tour:  # Vérifie le tour du joueur
-                self.last_posA=choix
                 self.repartition(choix)
 
             elif not self.tour:  # Vérifie le tour du joueur
@@ -133,12 +166,13 @@ class App:
             if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
                 self.initialise()
     def update(self):
+        print(legal_moves(self.plateau_visu,self.tour))
         if self.run:
-            #On commence par vérifier si l'un des joueurs n'est pas affamé
-            self.nourrissage()
-
             if self.tour:
-                self.in_game(bot.bot_move(self.get_game()))
+                bot_move = bot.bot_move(self.get_game())
+                #self.last_posA= bot_move-1
+                self.last_posA = bot_move
+                self.in_game(bot_move)
             else:
                 self.in_game(self.player_control())
 
@@ -154,7 +188,7 @@ class App:
 
     def draw(self):
         pyxel.cls(2)
-        print(self.plateau_visu)
+        #print(self.plateau_visu)
         #Dessin du player
         if self.tour:
             pyxel.blt(90,10,0,0,32,224,16,0)
@@ -171,10 +205,12 @@ class App:
         # Dessin des trous du plateau
         for i in range(6):
             for j in range(2):
-
                 pyxel.blt(26+i*40,40+70*j,0,0,0,32,32,0)
-                pyxel.text(40+i*40,54+70*j,str(self.plateau_visu[j][i]),8)
-
+                if i ==self.last_posA and j==0:
+                    pyxel.blt(26 + i * 40, 40, 0, 32, 0, 32, 32, 0)
+                if i == self.last_posB and j==1:
+                    pyxel.blt(26 + i * 40, 110, 0, 32, 0, 32, 32, 0)
+                pyxel.text(40 + i * 40, 54 + 70 * j, str(self.plateau_visu[j][i]), 8)
                 seeds_count = self.plateau_visu[j][i]
                 # Dessin de chaque graine dans le trou
                 for k in range(seeds_count):
@@ -184,23 +220,10 @@ class App:
                     # Dessin de la graine
                     pyxel.blt(seed_x, seed_y, 0, 64, 0, 15, 15, 0)
 
-
-
-
-
-        print(self.last_posB)
-        pyxel.blt(26+self.last_posA*40,40,0,32,0,32,32,0)
-        pyxel.blt(26+self.last_posB*40,50+60,0,32,0,32,32,0)
-        pyxel.text(40+self.last_posA*40,54,str(self.plateau_visu[0][self.last_posA]),8)
-        pyxel.text(40+self.last_posB*40,70+54,str(self.plateau_visu[1][self.last_posB]),8)
-        '''#pyxel.text(40+self.last_posA*40,54,str(self.plateau_visu[1][self.last_posA]),8)
-
-        #pyxel.text(40+(self.last_posB-1)*40,54+70,str(self.plateau_visu[1][self.last_posB]),8)'''
-
-        pyxel.text(10,10,'Reset',7)
         if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
             pyxel.text(10, 10, 'Reset', 10)
-
+        else:
+            pyxel.text(10, 10, 'Reset', 7)
         if not self.run:
             if self.scoreA > self.scoreB:
                 pyxel.text(110,80,"Le Robot a gagne !",7)
