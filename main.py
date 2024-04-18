@@ -146,9 +146,11 @@ class App:
                 for i in range(6):
                     # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
                     if 30 + i * 40 < pos[0] < 62 + i * 40:
-                        if i in legal_moves(self.plateau_visu,False):
+                        if i in legal_moves(self.plateau_visu, False):
                             self.last_posB = i
                             return i
+                        else:
+                            return None
     def in_game(self,choix):
         if choix is not None:
             #print("super choix:"+str(choix))
