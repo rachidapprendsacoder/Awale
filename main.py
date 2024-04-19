@@ -18,23 +18,7 @@ def repartition_sim(simulation, num):
 def legal_moves(simulation,joueur):
     #donne une liste de bon coup pour le joueur concerné
     legal_moves = []
-    if joueur: #BOT
-        #If the player's hungry ...
-        if simulation[1] == [0, 0, 0, 0, 0, 0]:
-            #... We're looking for a full cell, nearest, forcing him to play this move
-            for i in range(6):
-                if simulation[0][i] > i:
-                    legal_moves.append(i)
-                    return legal_moves
-            return []
-        #If all goes well, we just look for cases which are not empty
-        else:
-            for i in range(6):
-                if simulation[0][i] != 0:
-                    legal_moves.append(i)
-            return legal_moves
-
-    else: #PLAYER
+    if not joueur: #PLAYER
         # If the bot's hungry ...
         if simulation[0] == [0, 0, 0, 0, 0, 0]:
             # We're looking for a full cell, the nearest one
@@ -73,6 +57,7 @@ def recuperation_graines_sim(self,simulation,num):
                 simulation[0][i] = 0
             i = (i+1)%12
         return simulation
+
 class App:
     def __init__(self):
         pyxel.init(screen_size_x, screen_size_y)
@@ -152,18 +137,12 @@ class App:
             if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
                 self.initialise()
     def update(self):
-        #print(legal_moves(self.plateau_visu,self.tour))
-        #print(legal_moves(self.plateau_visu,True))
         if self.run:
             if self.tour:
-                print(self.plateau_visu)
                 bot_move = bot.bot_move(self.get_game())
-                print(bot_move)
                 if bot_move == None:
                     self.recuperation_final()
                     self.run = False
-
-                #self.last_posA= bot_move-1
                 else:
                     self.last_posA = bot_move
                     self.in_game(bot_move)
@@ -172,14 +151,8 @@ class App:
 
             self.init_button()
 
-
-
-
-
     def draw(self):
         pyxel.cls(2)
-        #print(self.plateau_visu)
-        #Dessin du player
         if self.tour:
             pyxel.blt(90,10,0,0,32,224,16,0)
         else:
@@ -210,9 +183,11 @@ class App:
                     # Dessin de la graine
                     pyxel.blt(seed_x, seed_y, 0, 64, 0, 15, 15, 0)
 
-        if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
-            pyxel.text(10, 10, 'Reset', 10)
+        if 8<pyxel.mouse_x<31 and 8<pyxel.mouse_y<18:
+            pyxel.rect(8, 8, 23, 10, 11)
+            pyxel.text(10, 10, 'Reset', 0)
         else:
+            pyxel.rect(8, 8, 23, 10, 5)
             pyxel.text(10, 10, 'Reset', 7)
         if not self.run:
             if self.scoreA > self.scoreB:

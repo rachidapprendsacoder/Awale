@@ -96,10 +96,6 @@ def bot_move(situation):
     if legal_moves(situation,True)!= []:
         print(legal_moves(situation,True))
         next_move = random.choice(legal_moves(situation,True))
-
         return next_move
 
-sim = [[0, 0, 0,0, 0, 0], [0, 0, 0, 0, 0, 1]],True,0,0
-
-print(bot_move(sim))
 
