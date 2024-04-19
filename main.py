@@ -23,9 +23,10 @@ def legal_moves(simulation,joueur):
         if simulation[1] == [0, 0, 0, 0, 0, 0]:
             #... We're looking for a full cell, nearest, forcing him to play this move
             for i in range(6):
-                if simulation[0][i] != 0:
+                if simulation[0][i] > i:
                     legal_moves.append(i)
                     return legal_moves
+            return []
         #If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
@@ -35,12 +36,13 @@ def legal_moves(simulation,joueur):
 
     else: #PLAYER
         # If the bot's hungry ...
-        if simulation[1] == [0, 0, 0, 0, 0, 0]:
+        if simulation[0] == [0, 0, 0, 0, 0, 0]:
             # We're looking for a full cell, the nearest one
             for i in range(5,-1,-1):
-                if simulation[1][i] != 0:
+                if simulation[1][i] > 5-i:
                     legal_moves.append(i)
                     return legal_moves
+            return []
         # If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
@@ -85,35 +87,6 @@ class App:
         self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
         self.plateau_visu = [[4, 4, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4]]
 
-    def nourrissage(self):
-        #Si joueur n'a plus de graine et que c'est le tour du bot
-        if self.plateau_jeu[6:12]==[0,0,0,0,0,0] and self.tour :
-
-            for i in range(6):
-
-                if self.plateau_jeu[i]!=0:
-
-                    self.repartition(i)
-                    self.tour = not self.tour
-                    break
-
-        #s'il n'a tjrs pas de graine mais que c'est à son tour
-        elif self.plateau_jeu[6:12]==[0,0,0,0,0,0] and not self.tour :
-            self.run = False
-
-        #Si bot n'a plus de graines et que tour au joueur
-        elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and not self.tour:
-
-            for i in range(5,11):
-                if self.plateau_jeu[i] != 0:
-
-                    self.repartition(i)
-                    self.tour = not self.tour
-                    break
-        #Si bot tjrs pas de graine
-        elif self.plateau_jeu[0:6]==[0,0,0,0,0,0] and self.tour :
-            self.run = False
-
     def repartition(self,num):
         i = 0
 
@@ -140,17 +113,22 @@ class App:
     def start(self):
         pyxel.run(self.update, self.draw)
     def player_control(self):
-        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-            pos = pyxel.mouse_x, pyxel.mouse_y
-            if 110 < pos[1] < 142:
-                for i in range(6):
-                    # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
-                    if 30 + i * 40 < pos[0] < 62 + i * 40:
-                        if i in legal_moves(self.plateau_visu, False):
-                            self.last_posB = i
-                            return i
-                        else:
-                            return None
+        if legal_moves(self.plateau_visu, False) != []:
+            print(legal_moves(self.plateau_visu,False))
+            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+                pos = pyxel.mouse_x, pyxel.mouse_y
+                if 110 < pos[1] < 142:
+                    for i in range(6):
+                        # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
+                        if 30 + i * 40 < pos[0] < 62 + i * 40:
+                            if i in legal_moves(self.plateau_visu, False):
+                                self.last_posB = i
+                                return i
+        else:
+            self.recuperation_final()
+            self.run = False
+
+
     def in_game(self,choix):
         if choix is not None:
             #print("super choix:"+str(choix))
@@ -160,7 +138,13 @@ class App:
             elif not self.tour:  # Vérifie le tour du joueur
                 self.repartition(11 - choix)
             self.tour = not self.tour
-
+    def recuperation_final(self):
+        for i in range(6):
+            self.scoreA += self.plateau_jeu[i]
+            self.plateau_jeu[i] = 0
+        for i in range(6, 12):
+            self.scoreB += self.plateau_jeu[i]
+            self.plateau_jeu[i] = 0
     def get_game(self):
         return self.plateau_visu, self.tour, self.scoreA,self.scoreB
     def init_button(self):
@@ -168,25 +152,29 @@ class App:
             if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
                 self.initialise()
     def update(self):
-        print(legal_moves(self.plateau_visu,self.tour))
+        #print(legal_moves(self.plateau_visu,self.tour))
+        #print(legal_moves(self.plateau_visu,True))
         if self.run:
             if self.tour:
+                print(self.plateau_visu)
                 bot_move = bot.bot_move(self.get_game())
+                print(bot_move)
+                if bot_move == None:
+                    self.recuperation_final()
+                    self.run = False
+
                 #self.last_posA= bot_move-1
-                self.last_posA = bot_move
-                self.in_game(bot_move)
+                else:
+                    self.last_posA = bot_move
+                    self.in_game(bot_move)
             else:
                 self.in_game(self.player_control())
 
             self.init_button()
-        else:
-            #Récupération des graines manquantes sur le plateau
-            for i in range(6):
-                self.scoreA+=self.plateau_jeu[i]
-                self.plateau_jeu[i]=0
-            for i in range(6,12):
-                self.scoreB+=self.plateau_jeu[i]
-                self.plateau_jeu[i] = 0
+
+
+
+
 
     def draw(self):
         pyxel.cls(2)

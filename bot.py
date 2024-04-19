@@ -60,31 +60,32 @@ def legal_moves(simulation,joueur):
     legal_moves = []
     if joueur: #BOT
         #If the player's hungry ...
-        if simulation[1] == [0, 0, 0, 0, 0, 0]:
+        if simulation[0][1] == [0, 0, 0, 0, 0, 0]:
             #... We're looking for a full cell, nearest, forcing him to play this move
             for i in range(6):
-                if simulation[0][i] != 0:
+                if simulation[0][0][i] > i:
                     legal_moves.append(i)
                     return legal_moves
+            return []
         #If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
-                if simulation[0][i] != 0:
+                if simulation[0][0][i] != 0:
                     legal_moves.append(i)
             return legal_moves
 
     else: #PLAYER
         # If the bot's hungry ...
-        if simulation[1] == [0, 0, 0, 0, 0, 0]:
-            # We're looking for a full cell, the nearest one
+        if simulation[0][0] == [0, 0, 0, 0, 0, 0]:
+            # We're looking for a full cell, the nearest one, in the other sense than for the bot
             for i in range(5,-1,-1):
-                if simulation[1][i] != 0:
+                if simulation[0][1][i] > 5-i:
                     legal_moves.append(i)
                     return legal_moves
         # If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
-                if simulation[1][i] != 0:
+                if simulation[0][1][i] != 0:
                     legal_moves.append(i)
             return legal_moves
 
@@ -92,9 +93,13 @@ def legal_moves(simulation,joueur):
 def bot_move(situation):
     #print(situation)
     time.sleep(1)
-    next_move = random.randint(0, 5)
-    #print(value_game(situation))
-    if next_move in legal_moves(situation, True):
+    if legal_moves(situation,True)!= []:
+        print(legal_moves(situation,True))
+        next_move = random.choice(legal_moves(situation,True))
+
         return next_move
-    else:
-        return None
+
+sim = [[0, 0, 0,0, 0, 0], [0, 0, 0, 0, 0, 1]],True,0,0
+
+print(bot_move(sim))
+
