@@ -2,19 +2,15 @@ import pyxel
 import bot
 import random
 
-
+def convertisseur(simu,type):
+    if type=='jeu':
+        result = simu[0]+simu[1][5:-8:-1]
+        return result
+    elif type=='visu':
+        result = simu[:6] , simu[12:5:-1]
+        return result
 screen_size_x, screen_size_y = 300,200
-def repartition_sim(simulation, num):
-    i = 0
 
-    # Tant que la case où on puise les graines est pleine, on remplit
-    while simulation[0][num] != 0:
-        simulation[0][(num + i) % 12] += 1
-        simulation[0][(num) % 12] -= 1
-        i = (i - 1) % 12
-    if simulation[0][(num+i+1)%12] in [2,3]:
-        return recuperation_graines_sim((num+i+1)%12)
-    return simulation
 def legal_moves(simulation,joueur):
     #donne une liste de bon coup pour le joueur concerné
     legal_moves = []
@@ -32,31 +28,40 @@ def legal_moves(simulation,joueur):
             for i in range(6):
                 if simulation[1][i] != 0:
                     legal_moves.append(i)
+
+            '''for i in range(len(legal_moves)):
+                simulation2 = jeu.recuperation_graines(jeu.plateau_jeu,legal_moves[i])
+                if simulation2[0]==[0,0,0,0,0,0]:
+                    del legal_moves[i]'''
+
             return legal_moves
 
 
-def in_game_sim(simulation,choix):
-    if choix is not None:
-        tour = simulation[1]
-        simulation[1] = not tour
-        if tour:  # Vérifie le tour du joueur
-            legal_moves(simulation)
-            return repartition_sim(choix)
+def recuperation_graines_sim(sim, num):
+    i = num
+    tour = False
+    simulation = sim
+    while simulation[i] in [2, 3]:
+        if tour and 6 <= i <= 11:
+            simulation[i] = 0
+        elif not tour and 0 <= i <= 5:
+            simulation[i] = 0
+        i = (i + 1) % 12
+    return simulation
 
-        else:  # Vérifie le tour du joueur
-            return repartition_sim(11 - choix)
-def recuperation_graines_sim(self,simulation,num):
-        i = num
-        tour = simulation[1]
-        while simulation[0][i] in [2,3]:
-            if tour and 6<=i<=11:
-                simulation[2] += simulation[0]
-                simulation[0][i] = 0
-            elif not tour and 0<=i<=5:
-                simulation[3] += simulation[0]
-                simulation[0][i] = 0
-            i = (i+1)%12
-        return simulation
+def repartition_sim(sim, num):
+    i = 0
+    simulation = sim
+    # Tant que la case où on puise les graines est pleine, on remplit
+    while simulation[num] != 0:
+        simulation[(num + i) % 12] += 1
+        simulation[(num) % 12] -= 1
+        i = (i - 1) % 12
+    if simulation[(num+i+1)%12] in [2,3]:
+        return recuperation_graines_sim(simulation,(num+i+1)%12)
+    return simulation
+
+
 
 class App:
     def __init__(self):
@@ -69,8 +74,8 @@ class App:
         self.last_posA, self.last_posB = 0, 0
         self.run = True
         self.tour = True
-        self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
-        self.plateau_visu = [[4, 4, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4]]
+        self.plateau_jeu = [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1]
+        self.plateau_visu = [[1, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 1]]
 
     def repartition(self,num):
         i = 0
@@ -97,16 +102,16 @@ class App:
 
     def start(self):
         pyxel.run(self.update, self.draw)
+
     def player_control(self):
-        if legal_moves(self.plateau_visu, False) != []:
-            print(legal_moves(self.plateau_visu,False))
+        if self.legal_moves() != []:
             if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
                 pos = pyxel.mouse_x, pyxel.mouse_y
                 if 110 < pos[1] < 142:
                     for i in range(6):
                         # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
                         if 30 + i * 40 < pos[0] < 62 + i * 40:
-                            if i in legal_moves(self.plateau_visu, False):
+                            if i in self.legal_moves():
                                 self.last_posB = i
                                 return i
         else:
@@ -134,8 +139,34 @@ class App:
         return self.plateau_visu, self.tour, self.scoreA,self.scoreB
     def init_button(self):
         if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-            if 10<pyxel.mouse_x<30 and 10<pyxel.mouse_y<15:
+            if 10<pyxel.mouse_x<30 and 8<pyxel.mouse_y<18:
                 self.initialise()
+
+    def legal_moves(self):
+        #donne une liste de bon coup pour le joueur concerné
+        legal_moves = []
+        if not self.tour: #PLAYER
+            # If the bot's hungry ...
+            if self.plateau_visu[0] == [0, 0, 0, 0, 0, 0]:
+                # We're looking for a full cell, the nearest one
+                for i in range(5,-1,-1):
+                    if self.plateau_visu[1][i] > 5-i:
+                        legal_moves.append(i)
+                        return legal_moves
+                return []
+            # If all goes well, we just look for cases which are not empty
+            else:
+                for i in range(6):
+                    if self.plateau_visu[1][i] != 0:  # Déjà, faut pas que ce soit un zéro ...
+                        # Ensuite on simule si on jouait ce coup-là
+                        simulation2 = convertisseur(self.plateau_visu, 'jeu')
+                        simulation2 = repartition_sim(simulation2, 11 - i)
+                        if simulation2[:6] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
+                            legal_moves.append(i)
+
+                return legal_moves
+
+
     def update(self):
         if self.run:
             if self.tour:
@@ -149,7 +180,7 @@ class App:
             else:
                 self.in_game(self.player_control())
 
-            self.init_button()
+        self.init_button()
 
     def draw(self):
         pyxel.cls(2)
@@ -192,8 +223,10 @@ class App:
         if not self.run:
             if self.scoreA > self.scoreB:
                 pyxel.text(110,80,"Le Robot a gagne !",7)
-            else:
+            elif self.scoreA < self.scoreB:
                 pyxel.text(110, 80, "Le Joueur a gagne !",7)
+            else:
+                pyxel.text(130, 80, "Ex aequo !", 7)
 
 jeu = App()
 jeu.start()
