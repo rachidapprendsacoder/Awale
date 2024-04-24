@@ -11,31 +11,33 @@ def convertisseur(simu,type):
         return result
 screen_size_x, screen_size_y = 300,200
 
-def legal_moves(simulation,joueur):
-    #donne une liste de bon coup pour le joueur concerné
+def legal_moves(simulation):
     legal_moves = []
-    if not joueur: #PLAYER
+    plateau_visu = simulation[0]
+    tour = simulation[1]
+    scoreA = simulation[2]
+    scoreB = simulation[3]
+    if not tour:  # PLAYER
         # If the bot's hungry ...
-        if simulation[0] == [0, 0, 0, 0, 0, 0]:
+        if plateau_visu[0] == [0, 0, 0, 0, 0, 0]:
             # We're looking for a full cell, the nearest one
-            for i in range(5,-1,-1):
-                if simulation[1][i] > 5-i:
+            for i in range(5, -1, -1):
+                if plateau_visu[1][i] > 5 - i:
                     legal_moves.append(i)
                     return legal_moves
             return []
         # If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
-                if simulation[1][i] != 0:
-                    legal_moves.append(i)
-
-            '''for i in range(len(legal_moves)):
-                simulation2 = jeu.recuperation_graines(jeu.plateau_jeu,legal_moves[i])
-                if simulation2[0]==[0,0,0,0,0,0]:
-                    del legal_moves[i]'''
+                if plateau_visu[1][i] != 0:  # Déjà, il faut pas que ce soit un zéro ...
+                    # Ensuite, on simule si on jouait ce coup-là
+                    simulation2 = convertisseur(plateau_visu, 'jeu')
+                    simulation2 = repartition_sim(simulation2, 11 - i)
+                    if simulation2[:6] != [0, 0, 0, 0, 0,
+                                           0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
+                        legal_moves.append(i)
 
             return legal_moves
-
 
 def recuperation_graines_sim(sim, num):
     i = num
