@@ -29,39 +29,46 @@ def legal_moves(simulation):
         # If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
-                if plateau_visu[1][i] != 0:  # Déjà, il faut pas que ce soit un zéro ...
+                if plateau_visu[1][i] != 0:  # Déjà, il ne faut pas que ce soit un zéro ...
                     # Ensuite, on simule si on jouait ce coup-là
-                    simulation2 = convertisseur(plateau_visu, 'jeu')
-                    simulation2 = repartition_sim(simulation2, 11 - i)
+                    '''simulation2 = convertisseur(plateau_visu, 'jeu')'''
+                    simulation2 = repartition_sim(simulation, 11 - i)[0]
                     if simulation2[:6] != [0, 0, 0, 0, 0,
                                            0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
                         legal_moves.append(i)
 
             return legal_moves
 
-def recuperation_graines_sim(sim, num):
+def recuperation_graines_sim(simulation, num):
     i = num
-    tour = False
-    simulation = sim
-    while simulation[i] in [2, 3]:
+    plateau_jeu = simulation[0] #jeu
+    tour = simulation[1]
+    scoreA = simulation[2]
+    scoreB = simulation[3]
+    while plateau_jeu[i] in [2, 3]:
         if tour and 6 <= i <= 11:
-            simulation[i] = 0
+            scoreA += plateau_jeu[i]
+            plateau_jeu[i] = 0
         elif not tour and 0 <= i <= 5:
-            simulation[i] = 0
+            scoreB += plateau_jeu[i]
+            plateau_jeu[i] = 0
         i = (i + 1) % 12
-    return simulation
+    return (plateau_jeu, tour, scoreA, scoreB)
 
-def repartition_sim(sim, num):
+def repartition_sim(simulation, num):
     i = 0
-    simulation = sim
+    plateau_jeu = convertisseur(simulation[0], 'jeu')
+    tour = simulation[1]
+    scoreA = simulation[2]
+    scoreB = simulation[3]
     # Tant que la case où on puise les graines est pleine, on remplit
-    while simulation[num] != 0:
-        simulation[(num + i) % 12] += 1
-        simulation[(num) % 12] -= 1
+    while plateau_jeu[num] != 0:
+        plateau_jeu[(num + i) % 12] += 1
+        plateau_jeu[(num) % 12] -= 1
         i = (i - 1) % 12
-    if simulation[(num+i+1)%12] in [2,3]:
-        return recuperation_graines_sim(simulation,(num+i+1)%12)
-    return simulation
+    if plateau_jeu[(num+i+1)%12] in [2,3]:
+        return recuperation_graines_sim((plateau_jeu,tour, scoreA, scoreB),(num+i+1)%12)
+    return (plateau_jeu, tour, scoreA, scoreB)
 
 
 
@@ -159,11 +166,10 @@ class App:
             # If all goes well, we just look for cases which are not empty
             else:
                 for i in range(6):
-                    if self.plateau_visu[1][i] != 0:  # Déjà, faut pas que ce soit un zéro ...
-                        # Ensuite on simule si on jouait ce coup-là
-                        simulation2 = convertisseur(self.plateau_visu, 'jeu')
-                        simulation2 = repartition_sim(simulation2, 11 - i)
-                        if simulation2[:6] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
+                    if self.plateau_visu[1][i] != 0:  # Déjà, il ne faut pas que ce soit un zéro ...
+                        # Ensuite, on simule si on jouait ce coup-là
+                        simulation2 = repartition_sim(self.get_game(), 11 - i)
+                        if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
                             legal_moves.append(i)
 
                 return legal_moves
