@@ -30,12 +30,11 @@ def legal_moves(simulation):
         else:
             for i in range(6):
                 if plateau_visu[1][i] != 0:  # Déjà, il ne faut pas que ce soit un zéro ...
-                    # Ensuite, on simule si on jouait ce coup-là
-                    '''simulation2 = convertisseur(plateau_visu, 'jeu')'''
+                    legal_moves.append(i)
+                    '''# Ensuite, on simule si on jouait ce coup-là
                     simulation2 = repartition_sim(simulation, 11 - i)[0]
                     if simulation2[:6] != [0, 0, 0, 0, 0,
-                                           0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
-                        legal_moves.append(i)
+                                           0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
 
             return legal_moves
 
@@ -78,13 +77,14 @@ class App:
         pyxel.load('res2.pyxres')
         pyxel.mouse(True)
         self.initialise()
+
     def initialise(self):
         self.scoreA, self.scoreB = 0, 0
         self.last_posA, self.last_posB = 0, 0
         self.run = True
-        self.tour = True
-        self.plateau_jeu = [1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1]
-        self.plateau_visu = [[1, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 1]]
+        self.tour = str(input("Qui commence?: BOT ; Joueur:>> ")) == 'BOT'
+        self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+        self.plateau_visu = [[4, 4, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4]]
 
     def repartition(self,num):
         i = 0
@@ -167,10 +167,11 @@ class App:
             else:
                 for i in range(6):
                     if self.plateau_visu[1][i] != 0:  # Déjà, il ne faut pas que ce soit un zéro ...
-                        # Ensuite, on simule si on jouait ce coup-là
+
+                        legal_moves.append(i)
+                '''# Ensuite, on simule si on jouait ce coup-là
                         simulation2 = repartition_sim(self.get_game(), 11 - i)
-                        if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe
-                            legal_moves.append(i)
+                        if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
 
                 return legal_moves
 
