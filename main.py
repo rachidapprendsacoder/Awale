@@ -1,8 +1,12 @@
 import pyxel
 import bot
 import random
+import copy
+import threading
 
-
+coefs1 = [0.7260000000000013, 5.340999999999999, -5.5079999999999965, 7.895000000000005, -12.87, 15.405000000000005, 0.7699999999999994, 13.483, 17.808]
+coefs2 = [0.7260000000000013, 5.340999999999999, -5.5079999999999965, 7.895000000000005, -12.87, 15.405000000000005, 0.7699999999999994, 13.483, 17.808]
+mode = int(input("mode 1-joueur, 0-apprentissage : ")) == 1
 def convertisseur(simu, type):
     if type=='jeu':
         result = simu[0]+simu[1][5:-8:-1]
@@ -77,17 +81,31 @@ def repartition_sim(simulation, num):
 
 class App:
     def __init__(self):
-        pyxel.init(screen_size_x, screen_size_y)
-        pyxel.load('res2.pyxres')
-        pyxel.mouse(True)
+        global mode
         self.initialise()
+        if mode:
+            pyxel.init(screen_size_x, screen_size_y)
+            pyxel.load('res2.pyxres')
+            pyxel.mouse(True)
+            pyxel.run(self.update, self.draw)
+        else :
+            print("nut")
+            self.scoreMutant = 0
+            self.affilee = 0
+            self.scoreOriginel = 0
+            self.apprend()
+
+
+
 
 
     def initialise(self):
         self.scoreA, self.scoreB = 0, 0
         self.last_posA, self.last_posB = 0, 0
         self.run = True
-        self.tour = str(input("Qui commence?: BOT ; Joueur:>> ")) == 'BOT'
+        #self.tour = str(input("Qui commence?: BOT ; Joueur:>> ")) == 'BOT'
+        self.tour = random.randint(0,1)
+
         self.plateau_jeu = [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
         self.plateau_visu = [[4, 4, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4]]
 
@@ -117,24 +135,17 @@ class App:
             i = (i+1)%12
 
 
-    def start(self):
-        pyxel.run(self.update, self.draw)
-
-
     def player_control(self):
-        if self.legal_moves() != []:
-            if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
-                pos = pyxel.mouse_x, pyxel.mouse_y
-                if 110 < pos[1] < 142:
-                    for i in range(6):
-                        # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
-                        if 30 + i * 40 < pos[0] < 62 + i * 40:
-                            if i in self.legal_moves():
-                                self.last_posB = i
-                                return i
-        else:
-            self.recuperation_final()
-            self.run = False
+        if pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT):
+            pos = pyxel.mouse_x, pyxel.mouse_y
+            if 110 < pos[1] < 142:
+                for i in range(6):
+                    # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
+                    if 30 + i * 40 < pos[0] < 62 + i * 40:
+                        if i in self.legal_moves():
+                            self.last_posB = i
+                            return i
+
 
 
     def in_game(self, choix):
@@ -158,7 +169,7 @@ class App:
 
 
     def get_game(self):
-        return self.plateau_visu, self.tour, self.scoreA, self.scoreB
+        return copy.deepcopy([self.plateau_jeu, self.tour, self.scoreA, self.scoreB])
 
 
     def init_button(self):
@@ -189,23 +200,69 @@ class App:
                         if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
 
                 return legal_moves
+        else :
+            # If the player's hungry ...
+            if self.plateau_visu[1] == [0, 0, 0, 0, 0, 0]:
+                # ... We're looking for a full cell, nearest, forcing him to play this move
+                for i in range(6):
+                    if self.plateau_visu[0][i] > i:
+                        legal_moves.append(i)
+                        return legal_moves
+                return []
+            # If all goes well, we just look for cases which are not empty
+            else:
+                for i in range(6):
+                    if self.plateau_visu[0][i] != 0:
+                        legal_moves.append(i)
+                return legal_moves
 
 
     def update(self):
         if self.run:
             if self.tour:
-                bot_move = bot.bot_move(self.get_game())
-                if bot_move == None:
-                    self.recuperation_final()
-                    self.run = False
-                else:
-                    self.last_posA = bot_move
-                    self.in_game(bot_move)
+                bot_move = bot.bot_move(self.get_game(),coefs1)
+                self.in_game(bot_move)
+                self.last_posA = bot_move
             else:
                 self.in_game(self.player_control())
+            if self.legal_moves() == []:
+                self.recuperation_final()
+                self.run = False
 
         self.init_button()
 
+    def apprend(self):
+        global coefs1, coefs2
+        while True :
+            self.plateau_visu = self.plateau_jeu[:6], self.plateau_jeu[12:5:-1]
+            if self.run:
+                if self.tour:
+                    bot_move = bot.bot_move(self.get_game(), coefs1)
+                    self.in_game(bot_move)
+                    self.last_posA = bot_move
+                else:
+                    # self.in_game(self.player_control())
+                    bot_move = bot.bot_move(self.get_game(), coefs2)
+                    self.in_game(bot_move)
+                    self.last_posB = bot_move
+                if self.legal_moves() == []:
+                    self.recuperation_final()
+                    self.run = False
+            else:
+                if self.scoreA < self.scoreB:
+                    coefs1 = bot.mutation(coefs2, magn=1)
+                    self.scoreOriginel += 1
+                    self.affilee += 1
+                else:
+                    coefs2 = coefs1
+                    coefs1 = bot.mutation(coefs1, magn=2)
+                    self.scoreMutant += 1
+                    self.affilee = 0
+                print("Mutant: " + str(coefs1))
+                print("vs => " + str(self.scoreMutant) + " / " + str(self.scoreOriginel) + f"(+{self.affilee})")
+                print("Originel: " + str(coefs2))
+                print("_________________________")
+                self.initialise()
 
     def draw(self):
         pyxel.cls(2)
@@ -256,4 +313,3 @@ class App:
 
 
 jeu = App()
-jeu.start()

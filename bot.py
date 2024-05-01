@@ -13,6 +13,12 @@ ocl = 10
 ac = 3
 oac = 3
 sd = 100
+#global wc,ca,cl,owc,oca,ocl,ac,oac,sd
+def mutation(coefs,magn = 1):
+    coefs = copy.deepcopy(coefs)
+    for i, coef in enumerate(coefs):
+        coefs[i] = coef + random.randint(-1000,1000)/1000 * magn
+    return coefs
 def value_game(situation):
 
     weak_case = 0
@@ -59,7 +65,7 @@ def value_game(situation):
 def repartition_sim(simulation, num):
     i = 0
 
-    # Tant que la case où on puise les graines est pleine, on remplit
+    # Tant que la case où on puisse les graines est pleine, on remplit
     while simulation[0][num] != 0:
         simulation[0][(num + i) % 12] += 1
         simulation[0][(num) % 12] -= 1
@@ -111,9 +117,10 @@ def recuperation_graines_sim(simulation,num):
 
 
 def legal_moves(simulation,joueur):
+    global tour_bot
     #donne une liste de bon coup pour le joueur concerné
     legal_moves = []
-    if joueur: #BOT
+    if tour_bot: #BOT
         #If the player's hungry ...
         if simulation[1] == [0, 0, 0, 0, 0, 0]:
             #... We're looking for a full cell, nearest, forcing him to play this move
@@ -143,14 +150,14 @@ def legal_moves(simulation,joueur):
                 if simulation[1][i] != 0:
                     legal_moves.append(i)
             return legal_moves
-def minmax(simulation,joueur, depth = 7, depth_current = 7):
-    global tour_bot
+def minmax(simulation,joueur, depth = 6, depth_current = 6):
 
     plateau = simulation[0]
     lm = legal_moves([plateau[:6], plateau[12:5:-1]], joueur)
-
     if depth_current <= 0 or lm == [] or lm is None:
-        if joueur == tour_bot :
+        if depth_current == depth:
+            return 0
+        if joueur :
             return value_game(simulation)
         else:
             return value_game(simulation) - 5
@@ -162,15 +169,7 @@ def minmax(simulation,joueur, depth = 7, depth_current = 7):
             values[move] = minmax(sim, not joueur, depth_current = depth_current-1)
         minmax_value = None
         best_move = None
-        if joueur == tour_bot :
-            for move, value in values.items():
-                if minmax_value is None:
-                    best_move = move
-                    minmax_value = value
-                elif minmax_value > value :
-                    best_move = move
-                    minmax_value = value
-        else:
+        if joueur :
             for move, value in values.items():
                 if minmax_value is None:
                     best_move = move
@@ -178,19 +177,27 @@ def minmax(simulation,joueur, depth = 7, depth_current = 7):
                 elif minmax_value < value :
                     best_move = move
                     minmax_value = value
+        else:
+            for move, value in values.items():
+                if minmax_value is None:
+                    best_move = move
+                    minmax_value = value
+                elif minmax_value > value :
+                    best_move = move
+                    minmax_value = value
         if depth_current == depth:
-            print(values)
-            print("=>"+str(best_move))
             return best_move
         else:
             return minmax_value
-
 tour_bot = True
 
-def bot_move(situation):
-    sim = copy.copy(list(situation[:]).copy())
+def bot_move(situation,coefs):
+    global tour_bot
+    global wc, ca, cl, owc, oca, ocl, ac, oac, sd
+    wc, ca, cl, owc, oca, ocl, ac, oac, sd = coefs
+    tour_bot = situation[-1]
+    sim = copy.deepcopy(situation)
     choix = minmax(sim,True)
-    print(value_game(in_game_sim(situation,choix)))
     return choix
 
 
