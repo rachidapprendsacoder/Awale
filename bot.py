@@ -83,8 +83,7 @@ def legal_moves(simulation,joueur):
             for i in range(5,-1,-1):
                 if simulation[1][i] > 5-i:
                     legal_moves.append(i)
-                    return legal_moves
-            return []
+            return legal_moves
         # If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):

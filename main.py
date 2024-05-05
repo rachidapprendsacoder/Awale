@@ -30,8 +30,7 @@ def legal_moves(simulation):
             for i in range(5, -1, -1):
                 if plateau_visu[1][i] > 5 - i:
                     legal_moves.append(i)
-                    return legal_moves
-            return []
+            return legal_moves
         # If all goes well, we just look for cases which are not empty
         else:
             for i in range(6):
@@ -141,7 +140,7 @@ class App:
             if 110 < pos[1] < 142:
                 for i in range(6):
                     # if : #On doit pas pouvoir jouer une case vide et ainsi laisser le tour à l'adversaire
-                    if 30 + i * 40 < pos[0] < 62 + i * 40:
+                    if 26 + i * 40 < pos[0] < 58 + i * 40:
                         if i in self.legal_moves():
                             self.last_posB = i
                             return i
@@ -207,8 +206,8 @@ class App:
                 for i in range(6):
                     if self.plateau_visu[0][i] > i:
                         legal_moves.append(i)
-                        return legal_moves
-                return []
+                return legal_moves
+
             # If all goes well, we just look for cases which are not empty
             else:
                 for i in range(6):
@@ -228,6 +227,9 @@ class App:
             if self.legal_moves() == []:
                 self.recuperation_final()
                 self.run = False
+
+
+
 
         self.init_button()
 
