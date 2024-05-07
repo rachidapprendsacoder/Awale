@@ -14,7 +14,7 @@ def convertisseur(simu, type):
     elif type=='visu':
         result = simu[:6] , simu[12:5:-1]
         return result
-screen_size_x, screen_size_y = 300, 200
+screen_size_x, screen_size_y = 400, 200
 
 
 def legal_moves(simulation):
@@ -269,17 +269,17 @@ class App:
     def draw(self):
         pyxel.cls(2)
         if self.tour:
-            pyxel.blt(90, 10, 0, 0, 32, 224, 16, 0)
+            pyxel.blt(90, 10, 0, 0, 32, 112, 16, 0)
         else:
-            pyxel.blt(90, 150, 0, 0, 48, 224, 16, 0)
+            pyxel.blt(90, 150, 0, 0, 48, 112, 16, 0)
         self.plateau_visu = self.plateau_jeu[:6] , self.plateau_jeu[12:5:-1]
         pyxel.rect(22, 35, 240, 110, 4)
         pyxel.line(22, 90, 260, 90, 7)
 
-        pyxel.text(2, 90, 'Robot', 7)
-        pyxel.text(10, 80, str(self.scoreA), 7)
-        pyxel.text(280, 80, str(self.scoreB), 7)
-        pyxel.text(270, 90, 'Joueur', 7)
+        pyxel.text(350, 50, 'Robot', 7)
+        pyxel.text(380, 50, str(self.scoreA), 7)
+        pyxel.text(310, 50, str(self.scoreB), 7)
+        pyxel.text(280, 50, 'Joueur', 7)
         # Dessin des trous du plateau
         for i in range(6):
             for j in range(2):
@@ -298,6 +298,12 @@ class App:
                     # Dessin de la graine
                     pyxel.blt(seed_x, seed_y, 0, 64, 0, 15, 15, 0)
 
+        plateau1_x = 350
+        plateau1_y = 70
+        pyxel.blt(plateau1_x, plateau1_y, 0, 128, 0, 48, 48, 0)
+
+        plateau2_x = 280
+        pyxel.blt(plateau2_x, plateau1_y, 0, 128, 0, 48, 48, 0)
 
         if 8<pyxel.mouse_x<31 and 8<pyxel.mouse_y<18:
             pyxel.rect(8, 8, 23, 10, 11)
@@ -312,6 +318,27 @@ class App:
                 pyxel.text(110, 80, "Le Joueur a gagne !", 7)
             else:
                 pyxel.text(130, 80, "Ex aequo !", 7)
+
+        for k in range(self.scoreA):
+            if k < 28 :
+                seed_x = plateau1_x - 2 + (k % 4) * 7
+                seed_y = plateau1_y - 2 + (k // 4) * 6
+                pyxel.blt(seed_x, seed_y, 0, 112, 0, 15, 15, 0)
+            else:
+                pyxel.text(365, 120, "+", 8)
+                pyxel.text(370, 120, "+", 8)
+                pyxel.text(375, 120, "+", 8)
+
+
+        for k in range(self.scoreB):
+            if k < 28 :
+                seed_x = plateau2_x - 2 + (k % 4) * 7
+                seed_y = plateau1_y - 2 + (k // 4) * 6
+                pyxel.blt(seed_x, seed_y, 0, 96, 0, 15, 15, 0)
+            else:
+                pyxel.text(305, 120, "+", 8)
+                pyxel.text(295, 120, "+", 8)
+                pyxel.text(300, 120, "+", 8)
 
 
 jeu = App()
