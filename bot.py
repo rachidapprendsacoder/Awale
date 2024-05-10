@@ -1,179 +1,205 @@
 import random
+import neuron as ne
 import time
 import copy
+import threading
 # bot
-wc = 10
-ca = 10
-cl = 10
+gr = 10 # case à kroue
+mob = 10 # case à kroue perime
+blo = 0 # nombre graines
 
-owc = 100
-oca = 10
-ocl = 10
-
-ac = 3
-oac = 3
+#versions ennemies
+ogr = 10
+omob = 10
+oblo = 10
 sd = 100
+
 #global wc,ca,cl,owc,oca,ocl,ac,oac,sd
-def mutation(coefs,magn = 1):
+def mutation(coefs, a_muter = [0,9] ,magn = 1):
     coefs = copy.deepcopy(coefs)
-    for i, coef in enumerate(coefs):
-        coefs[i] = coef + random.randint(-1000,1000)/1000 * magn
+    for i, c in enumerate(coefs):
+        coefs[i] = c + random.randint(-10000, 10000)/10000 * magn
     return coefs
-def value_game(situation):
-
-    weak_case = 0
-    chain_amount = 0
-    chain_length = 0
-
-    opp_weak_case = 0
-    opp_chain_amount = 0
-
-    attack_case = 0
-    opp_attack_case = 0
+def value_game(situation, verif = False):
+    global tour_bot
     plateau = situation[0]
-    score_diff = situation[2]-situation[3]
-    for i, case in enumerate(plateau[0:6]):
-        idx = (i+case) % 11 + i//11
-        if 0 < case < 3:
-            weak_case += 1
-            for j in (k % 12 for k in range(i, 12+i)):
-                if 0 < situation[0][j] < 3:
-                    chain_length += 1
-                else:
-                    break
-            chain_amount += chain_length*cl + ca
-        elif 5 < idx and 0<plateau[idx]<3:
-            attack_case += 1
+    score_diff = situation[2] - situation[3]
 
-    for i, case in enumerate(plateau[6:12]):
-        if 0 < case < 3:
-            opp_weak_case += 1
-            for j in (k % 12 for k in range(i+6, 18+i)):
-                if 0 < plateau[j] < 3:
-                    chain_length += 1
-                else:
-                    break
-            chain_amount += chain_length*ocl + oca
-        elif (i + case+6) % 12 < 6:
-            opp_attack_case += 1
+    mobilite = 0
+    greniers = 0
+    blocus = 0
+    mobil_score = 0
+    len_dyn = 0
+    for i, p in enumerate(plateau[0:5]):
 
-    #value of position
+        if i < 3:
+            if 10 + i <= p <= 12 + i + 3:
+                greniers += 1
+            else :
+                greniers -= 0.5
+        elif i != 3:
+            if 2 <= p:
+                blocus += 1
+        mobil_score += p
+        if 5 > mobil_score and p < 4:
+            len_dyn += 1
+        else :
 
+            mobilite += len_dyn
+            len_dyn = 0
+            mobil_score = 0
 
-    return owc*opp_weak_case - wc*weak_case + opp_chain_amount - chain_amount + attack_case*ac + opp_attack_case*oac + score_diff*sd
+    mobilite += len_dyn
+    res = mob * mobilite + blo * blocus
+
+    mobilite = 0
+    ogreniers = 0
+    oblocus = 0
+    mobil_score = 0
+    len_dyn = 0
+    for i, p in enumerate(plateau[6:12]):
+        if i < 3:
+            if 10 + i <= p <= 12 + i + 3:
+                ogreniers += 1
+            else :
+                ogreniers -= 0.5
+        elif i != 3:
+            if 2 <= p:
+                oblocus += 1
+        mobil_score += p
+        if 5 > mobil_score and p < 4:
+            len_dyn += 1
+        else:
+            mobilite += len_dyn
+            len_dyn = 0
+            mobil_score = 0
+
+    mobilite += len_dyn
+    return res + omob * mobilite + ogr * ogreniers + oblo * blocus + sd * score_diff + gr * greniers
+
 
 def repartition_sim(simulation, num):
-    i = 0
-
-    # Tant que la case où on puisse les graines est pleine, on remplit
-    while simulation[0][num] != 0:
-        simulation[0][(num + i) % 12] += 1
-        simulation[0][(num) % 12] -= 1
-        i = (i - 1) % 12
-    if simulation[0][(num+i+1)%12] in [2,3]:
-        return recuperation_graines_sim(simulation, (num+i+1)%12)
+    i = 1
+    simulation = copy.deepcopy(simulation)
+    while simulation[0][num]-i > -1:
+        simulation[0][(num - i) % 12 - i // 12] += 1
+        i += 1
+    simulation[0][num] = 0
+    if simulation[0][(num - i + 1) % 12 - (i-1) // 12] in [2, 3]:
+        return recuperation_graines_sim(simulation, (num - i + 1) % 12 - (i+1) // 12)
     return simulation
-def legal_moves(simulation,joueur):
-    #donne une liste de bon coup pour le joueur concerné
-    legal_moves = []
-    if not joueur: #PLAYER
-        # If the bot's hungry ...
-        if simulation[0] == [0, 0, 0, 0, 0, 0]:
-            # We're looking for a full cell, the nearest one
-            for i in range(5,-1,-1):
-                if simulation[1][i] > 5-i:
-                    legal_moves.append(i)
-            return legal_moves
-        # If all goes well, we just look for cases which are not empty
-        else:
-            for i in range(6):
-                if simulation[1][i] != 0:
-                    legal_moves.append(i)
-            return legal_moves
-
 
 def in_game_sim(simulation,choix):
     if choix is not None:
+        simulation[1] = not simulation[1]
         tour = simulation[1]
-        simulation[1] = not tour
-        if tour:  # Vérifie le tour du joueur
-            return repartition_sim(simulation, choix)
-
-        else:  # Vérifie le tour du joueur
+        if tour:
             return repartition_sim(simulation, 11 - choix)
-def recuperation_graines_sim(simulation,num):
+
+        else:
+            return repartition_sim(simulation, 5-choix)
+
+
+def recuperation_graines_sim(simulation, num):
         i = num
         tour = simulation[1]
-        while simulation[0][i] in [2,3]:
-            if tour and 6<=i<= 11:
+        while simulation[0][i] in [2, 3]:
+            if not tour and 6 <= i <= 11:
                 simulation[2] += simulation[0][i]
                 simulation[0][i] = 0
-            elif not tour and 0<=i<=5:
+            elif tour and 0 <= i <= 5:
                 simulation[3] += simulation[0][i]
                 simulation[0][i] = 0
-            i = (i+1)%12
+            else :
+                break
+            i = (i+1) % 12
         return simulation
 
 
-def legal_moves(simulation,joueur):
-    global tour_bot
-    #donne une liste de bon coup pour le joueur concerné
-    legal_moves = []
-    if tour_bot: #BOT
-        #If the player's hungry ...
-        if simulation[1] == [0, 0, 0, 0, 0, 0]:
-            #... We're looking for a full cell, nearest, forcing him to play this move
-            for i in range(6):
-                if simulation[0][i] > i:
-                    legal_moves.append(i)
-                    return legal_moves
-            return []
-        #If all goes well, we just look for cases which are not empty
-        else:
-            for i in range(6):
-                if simulation[0][i] != 0:
-                    legal_moves.append(i)
-            return legal_moves
+def legal_moves(simulation, tour):
+    legalmoves = []
+    if not tour:  # PLAYER
+        for i in range(6):
+            if simulation[1][i] != 0:  # Déjà, il ne faut pas que ce soit un zéro ...
+                if simulation[0] != [0, 0, 0, 0, 0, 0] or simulation[1][i] > 5 - i:
+                    legalmoves.append(i)
 
-    else: #PLAYER
-        # If the bot's hungry ...
-        if simulation[0] == [0, 0, 0, 0, 0, 0]:
-            # We're looking for a full cell, the nearest one, in the other sense than for the bot
-            for i in range(5,-1,-1):
-                if simulation[1][i] > 5-i:
-                    legal_moves.append(i)
-                    return legal_moves
-        # If all goes well, we just look for cases which are not empty
-        else:
-            for i in range(6):
-                if simulation[1][i] != 0:
-                    legal_moves.append(i)
-            return legal_moves
-def minmax(simulation,joueur, depth = 6, depth_current = 6):
+        '''# Ensuite, on simule si on jouait ce coup-là
+            simulation2 = repartition_sim(self.get_game(), 11 - i)
+            if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
 
+    else:
+        # If the player's hungry ...
+        for i in range(6):
+            if simulation[0][5 - i] != 0:  # Déjà, il ne faut pas que ce soit un zéro ...
+                if simulation[1] != [0, 0, 0, 0, 0, 0] or simulation[0][5 - i] > 5 - i:
+                    legalmoves.append(i)
+
+    '''# Ensuite, on simule si on jouait ce coup-là
+    simulation2 = repartition_sim(self.get_game(), 11 - i)
+    if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
+
+    return legalmoves
+
+def evaluation(sim, simulation, max, depth, depth_current, Ai_ = None):
+    global nb_positions
+
+    if str(sim) in pos_simules.keys():
+        return pos_simules[str(sim)]
+    else:
+        if abs(simulation[2] - simulation[3]) <= 10 or nb_positions < 100000:
+            val = minmax(sim, not max, depth=depth, depth_current=depth_current - 1, Ai_=Ai_)
+            pos_simules[str(sim)] = val
+            return val
+        else:
+            val = (simulation[2] - simulation[3]) * sd * 2
+            pos_simules[str(sim)] = val
+            return val
+
+def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
+    global nb_positions, sd, pos_simules
+    global TH_MAX, th_len
+    nb_positions += 1
+    # Si max == True : le tour du robot
     plateau = simulation[0]
-    lm = legal_moves([plateau[:6], plateau[12:5:-1]], joueur)
-    if depth_current <= 0 or lm == [] or lm is None:
-        if depth_current == depth:
-            return 0
-        if joueur :
+    tour = simulation[1]
+    lm = legal_moves([plateau[:6], plateau[12:5:-1]], tour)
+    if depth_current <= 0 or lm == []:
+        # Si la simulation est fini ou profondeur atteint
+        if Ai_ is None:
             return value_game(simulation)
         else:
-            return value_game(simulation) - 5
+            Ai_._input(simulation[0] + [simulation[1]] + [simulation[2]] + [simulation[3]])
+            return Ai_._output()
     else :
         values = {}
-
+        th_liste = []
         for move in lm:
             sim = in_game_sim(copy.deepcopy(simulation), move)
-            values[move] = minmax(sim, not joueur, depth_current = depth_current-1)
+            if TH_MAX > th_len:
+                th = threading.Thread(target = evaluation, args = (sim, simulation, max, depth, depth_current, Ai_))
+                th_liste.append((str(sim), move, th))
+                th.start()
+                th_len += 1
+            else:
+                values[move] = evaluation(sim,simulation, max, depth, depth_current, Ai_)
+
+        if th_liste != []:
+            for sim, move, th in th_liste:
+
+                th.join()
+                th_len -= 1
+                values[move] = pos_simules[sim]
+
         minmax_value = None
         best_move = None
-        if joueur :
+
+        if max:
             for move, value in values.items():
                 if minmax_value is None:
                     best_move = move
                     minmax_value = value
-                elif minmax_value < value :
+                elif minmax_value < value:
                     best_move = move
                     minmax_value = value
         else:
@@ -181,22 +207,37 @@ def minmax(simulation,joueur, depth = 6, depth_current = 6):
                 if minmax_value is None:
                     best_move = move
                     minmax_value = value
-                elif minmax_value > value :
+                elif minmax_value > value:
                     best_move = move
                     minmax_value = value
         if depth_current == depth:
             return best_move
         else:
-            return minmax_value
-tour_bot = True
 
-def bot_move(situation,coefs):
-    global tour_bot
-    global wc, ca, cl, owc, oca, ocl, ac, oac, sd
-    wc, ca, cl, owc, oca, ocl, ac, oac, sd = coefs
-    tour_bot = situation[-1]
-    sim = copy.deepcopy(situation)
-    choix = minmax(sim,True)
+            return minmax_value
+pos_simules = {}
+nb_positions = 0
+TH_MAX = 10
+th_len = 0
+def bot_move(situation,coefs = None, Ai_ = None ):
+    global gr, blo, mob, ogr, oblo, omob, sd
+    global nb_positions, pos_simules
+    pos_simules = {}
+    nb_positions = 0
+    if coefs is not None :
+        gr, blo, mob, ogr, oblo, omob, sd = coefs
+    if situation[1]:
+        sim = copy.deepcopy(situation)
+    else :
+        sim = copy.deepcopy([situation[0][6:12]+situation[0][0:6],True,situation[3],situation[2]])
+    if situation[2]+situation[3] > 40:
+        choix = minmax(sim, True, Ai_=Ai_, depth= 6, depth_current=6)
+    else :
+
+        choix = minmax(sim,True, Ai_ = Ai_, depth=3,depth_current=3)
+    TH_MAX = 10
+    th_len = 0
+    value_game(in_game_sim(sim, choix), True)
     return choix
 
 
