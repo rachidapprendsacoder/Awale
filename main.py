@@ -14,7 +14,7 @@ import threading
 
 # Vous pouvez testez des combinaisons, ça peut marcher.
 # Si vous voyez lors de l'apprentissage que Le Z a perdu alors les coefs ne sont pas bons pour rentrer dans le dojo
-coefs = [55, 5, 15, -25, -4, -25, 120]
+coefs = [23, -2, 15, -14.5, +4, -15, 120]
 
 # LE DERNIER MAITRE EST CELUI QUI JOUE AU MODE JOUEUR
 li_coefs_maitres = [[0, 0, 0, 0, 0, 0, 100],
@@ -197,7 +197,7 @@ class App:
 
         self.plateau_visu = self.plateau_jeu[:6], self.plateau_jeu[12:5:-1]
         self.init_button()
-        if self.run:
+        if self.run and self.matchA <= self.matchB:
             if self.legal_moves() == [] or self.scoreA >= 25 or self.scoreB >= 25 or self.plateau_jeu in self.old_positions:
                 self.recuperation_final()
                 self.run = False
@@ -214,11 +214,14 @@ class App:
                     self.last_posB = bot_move
 
 
-        elif self.rounds <= 0:
+        elif self.rounds <= 0 or self.matchA > self.matchB:
             if self.scoreA > self.scoreB:
                 self.matchA += 1
             elif self.scoreA < self.scoreB:
                 self.matchB += 1
+            else:
+                self.matchA += 0.5
+                self.matchB += 0.5
             if self.matchA < self.matchB:
                 if self.dojo_i <= 0:
                     print(f"!!!!!!!!!!!!!!!!Disciple A GAGNE (+ {self.afZ})!!!!!!!!!!!!!!!!!")
@@ -260,18 +263,22 @@ class App:
 
             self.old_positions = []
             self.initialise()
+            # Pour montrer qui a gagner
+            self.scoreA, self.scoreB = int(self.matchA), int(self.matchB)
             self.matchA, self.matchB = 0, 0
 
             self.rounds = 1
-            time.sleep(1)
+            time.sleep(0.5)
         else:
             if self.scoreA > self.scoreB:
                 self.matchA += 1
             elif self.scoreA < self.scoreB:
                 self.matchB += 1
+            else:
+                self.matchA += 0.5
+                self.matchB += 0.5
             self.old_positions = []
             self.initialise()
-            time.sleep(0.5)
             self.tour = random.randint(0, 1)
             self.rounds -= 1
 
@@ -293,9 +300,9 @@ class App:
             pyxel.text(332, 50, f'{len(li_coefs_maitres)}eme AWIN :', 7)
         else :
             if self.dojo_i == 0:
-                pyxel.text(350, 50, '1er M.:', 7)
+                pyxel.text(340, 50, '1er M.:', 7)
             else :
-                pyxel.text(350, 50, f'{self.dojo_i}eme M.:', 7)
+                pyxel.text(340, 50, f'{self.dojo_i+1}eme M.:', 7)
 
         pyxel.text(380, 50, str(self.scoreA), 7)
         pyxel.text(310, 50, str(self.scoreB), 7)
