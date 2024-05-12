@@ -80,7 +80,6 @@ class App:
         self.old_positions = []
         self.plateau_visu = [[4 for i in range(6)], [4 for i in range(6)]]
         self.trigger = False
-        self.memoire = []
         self.old_score = []
 
     def repartition(self, num):
@@ -121,19 +120,16 @@ class App:
 
     def in_game(self, choix):
         if choix is not None and choix in self.legal_moves():
-
+            self.old_positions.append(copy.copy(self.plateau_jeu))
+            self.old_score.append(copy.copy((self.scoreA, self.scoreB)))
             #print("super choix:"+str(choix))
             if self.tour:  # Vérifie le tour du joueur
 
-                self.memoire.append(copy.copy(self.plateau_jeu))
-                self.old_score.append(copy.copy((self.scoreA, self.scoreB)))
                 self.repartition(5 - choix)
 
 
 
             else:  # Vérifie le tour du joueur
-                self.memoire.append(copy.copy(self.plateau_jeu))
-                self.old_score.append(copy.copy((self.scoreA, self.scoreB)))
                 self.repartition(11 - choix)
 
 
@@ -159,11 +155,11 @@ class App:
                 self.initialise()
 
     def back_button(self):
-        if 35 < pyxel.mouse_x < 55 and 8 < pyxel.mouse_y < 18 and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) and len(self.memoire)>=2 :
+        if 35 < pyxel.mouse_x < 55 and 8 < pyxel.mouse_y < 18 and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) and len(self.old_positions)>=2 :
             #Maj du plateau
-            self.plateau_jeu = self.memoire[-2]
+            self.plateau_jeu = self.old_positions[-2]
             #Maj de la mémoire
-            self.memoire = self.memoire[:len(self.memoire)-2]
+            self.old_positions = self.old_positions[:len(self.old_positions)-2]
             #Maj des scores
             self.scoreA = self.old_score[-2][0]
             self.scoreB = self.old_score[-2][1]
@@ -198,20 +194,14 @@ class App:
         self.init_button()
         self.back_button()
         if self.run:
-            '''if self.legal_moves() == [] or ( self.plateau_jeu in self.old_positions and self.plateau_jeu != self.old_positions[-1] and self.trigger):
+            if self.legal_moves() == [] or ( self.plateau_jeu in self.old_positions and self.trigger):
                 self.recuperation_final()
                 self.run = False
             else :
-                if  self.plateau_jeu in self.old_positions and self.plateau_jeu != self.old_positions[-1] :
-                    self.trigger = True
-                else :
-                    self.old_positions.append(copy.copy(self.plateau_jeu))'''
-
-            if self.legal_moves() == [] or ( self.plateau_jeu in self.memoire and self.plateau_jeu != self.memoire[-1] and self.trigger):
-                self.recuperation_final()
-                self.run = False
-            else:
-                if self.plateau_jeu in self.memoire and self.plateau_jeu != self.memoire[-1]:
+                if self.plateau_jeu in self.old_positions:
+                    self.trigger = 2
+                    self.old_positions
+                elif self.trigger == 2 :
                     self.trigger = True
 
 
