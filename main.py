@@ -66,7 +66,12 @@ class App:
         self.run = True
         # self.tour = str(input("Qui commence?: BOT ; Joueur:>> ")) == 'BOT'
         if self.old_tour is None:
-            self.tour = random.randint(0, 1)
+            alea = random.randint(0, 1)
+            if alea == 0:
+                self.tour = True
+            else:
+                self.tour = False
+
             self.old_tour = self.tour
         else:
             self.tour = not self.old_tour
@@ -75,7 +80,8 @@ class App:
         self.old_positions = []
         self.plateau_visu = [[4 for i in range(6)], [4 for i in range(6)]]
         self.trigger = False
-
+        self.memoire = []
+        self.old_score = []
 
     def repartition(self, num):
         i = 0
@@ -118,10 +124,19 @@ class App:
 
             #print("super choix:"+str(choix))
             if self.tour:  # Vérifie le tour du joueur
+
+                self.memoire.append(copy.copy(self.plateau_jeu))
+                self.old_score.append(copy.copy((self.scoreA, self.scoreB)))
                 self.repartition(5 - choix)
 
+
+
             else:  # Vérifie le tour du joueur
+                self.memoire.append(copy.copy(self.plateau_jeu))
+                self.old_score.append(copy.copy((self.scoreA, self.scoreB)))
                 self.repartition(11 - choix)
+
+
             self.tour = not self.tour
 
 
@@ -143,6 +158,18 @@ class App:
             if 10<pyxel.mouse_x<30 and 8<pyxel.mouse_y<18:
                 self.initialise()
 
+    def back_button(self):
+        if 35 < pyxel.mouse_x < 55 and 8 < pyxel.mouse_y < 18 and pyxel.btnp(pyxel.MOUSE_BUTTON_LEFT) and len(self.memoire)>=2 :
+            #Maj du plateau
+            self.plateau_jeu = self.memoire[-2]
+            #Maj de la mémoire
+            self.memoire = self.memoire[:len(self.memoire)-2]
+            #Maj des scores
+            self.scoreA = self.old_score[-2][0]
+            self.scoreB = self.old_score[-2][1]
+            #Maj de la mémoire
+            self.old_score = self.old_score[:len(self.old_score)-2]
+
 
     def legal_moves(self):
         #donne une liste de bon coup pour le joueur concerné
@@ -155,10 +182,6 @@ class App:
                     if self.plateau_visu[0] != [0, 0, 0, 0, 0, 0] or self.plateau_visu[1][i] > 5 - i:
                         legal_moves.append(i)
 
-            '''# Ensuite, on simule si on jouait ce coup-là
-                simulation2 = repartition_sim(self.get_game(), 11 - i)
-                if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
-
         else:
             # If the player's hungry ...
             for i in range(6):
@@ -166,31 +189,41 @@ class App:
                     if self.plateau_visu[1] != [0, 0, 0, 0, 0, 0] or self.plateau_visu[0][5 - i] > 5 - i:
                         legal_moves.append(i)
 
-        '''# Ensuite, on simule si on jouait ce coup-là
-        simulation2 = repartition_sim(self.get_game(), 11 - i)
-        if simulation2[:6][0] != [0, 0, 0, 0, 0, 0]:  # Si en jouant ce coup, l'adversaire n'est pas affamé, ça passe'''
+
 
         return legal_moves
 
     def update(self):
+        self.plateau_visu = self.plateau_jeu[:6], self.plateau_jeu[12:5:-1]
+        self.init_button()
+        self.back_button()
         if self.run:
-            if self.legal_moves() == [] or ( self.plateau_jeu in self.old_positions and self.plateau_jeu != self.old_positions[-1] and self.trigger):
+            '''if self.legal_moves() == [] or ( self.plateau_jeu in self.old_positions and self.plateau_jeu != self.old_positions[-1] and self.trigger):
                 self.recuperation_final()
                 self.run = False
             else :
                 if  self.plateau_jeu in self.old_positions and self.plateau_jeu != self.old_positions[-1] :
                     self.trigger = True
                 else :
-                    self.old_positions.append(copy.copy(self.plateau_jeu))
-                if self.tour:
-                    bot_move = bot.bot_move(self.get_game(), coefs=li_coefs_maitres[-1])
-                    self.in_game(bot_move)
-                    self.last_posA = 5 - bot_move
-                else:
-                    self.in_game(self.player_control())
-                    self.last_posB = self.player_control()
+                    self.old_positions.append(copy.copy(self.plateau_jeu))'''
 
-        self.init_button()
+            if self.legal_moves() == [] or ( self.plateau_jeu in self.memoire and self.plateau_jeu != self.memoire[-1] and self.trigger):
+                self.recuperation_final()
+                self.run = False
+            else:
+                if self.plateau_jeu in self.memoire and self.plateau_jeu != self.memoire[-1]:
+                    self.trigger = True
+
+
+            if self.tour:
+                bot_move = bot.bot_move(self.get_game(), coefs=li_coefs_maitres[-1])
+                self.in_game(bot_move)
+                self.last_posA = 5 - bot_move
+            else:
+                self.in_game(self.player_control())
+                self.last_posB = self.player_control()
+
+
 
     def apprend(self):
         global coefs, li_coefs_maitres
@@ -203,6 +236,7 @@ class App:
                 self.run = False
             else:
                 self.old_positions.append(copy.copy(self.plateau_jeu))
+                #A modofier par rapport à self.update()
                 if self.tour:
                     bot_move = bot.bot_move(self.get_game(), coefs=li_coefs_maitres[self.dojo_i])
                     self.in_game(bot_move)
@@ -292,7 +326,7 @@ class App:
                     pyxel.blt(90, 150, 0, 0, 48, 112, 16, 0)
                 else :
                     pyxel.blt(90, 150, 0, 0, 32, 112, 16, 0)
-        self.plateau_visu = self.plateau_jeu[:6] , self.plateau_jeu[12:5:-1]
+
         pyxel.rect(22, 35, 240, 110, 4)
         pyxel.line(22, 90, 260, 90, 7)
 
@@ -308,6 +342,12 @@ class App:
         pyxel.text(310, 50, str(self.scoreB), 7)
         if self.mode :
             pyxel.text(270, 50, 'Joueur :', 7)
+            if 35 < pyxel.mouse_x < 55 and 8 < pyxel.mouse_y < 18:
+                pyxel.rect(35, 8, 20, 10, 11)
+                pyxel.text(38, 10, 'Back', 0)
+            else:
+                pyxel.rect(35, 8, 20, 10, 5)
+                pyxel.text(38, 10, 'Back', 7)
         else :
             pyxel.text(270, 50, 'Disciple:', 7)
         # Dessin des trous du plateau
