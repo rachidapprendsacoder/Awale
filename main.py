@@ -332,6 +332,11 @@ class App:
                 pyxel.text(340, 50, '1er M.:', 7)
             else :
                 pyxel.text(340, 50, f'{self.dojo_i+1}eme M.:', 7)
+        #Corners
+        pyxel.blt(22, 35, 0, 176, 0, 15, 15, 0)
+        pyxel.blt(22, 130, 0, 176, 16, 15, 15, 0)
+        pyxel.blt(247, 35, 0, 192, 0, 15, 15, 0)
+        pyxel.blt(247, 130, 0, 192, 16, 15, 15, 0)
 
         pyxel.text(380, 50, str(self.scoreA), 7)
         pyxel.text(310, 50, str(self.scoreB), 7)
@@ -374,9 +379,7 @@ class App:
         plateau2_x = 280
         pyxel.blt(plateau2_x, plateau1_y, 0, 128, 0, 48, 48, 0)
 
-        coin1x = 0
-        coin1y = 200
-        pyxel.blt(coin1x, coin1y, 0, 176, 0, 15, 15, 0)
+
 
         if 8<pyxel.mouse_x<31 and 8<pyxel.mouse_y<18:
             pyxel.rect(8, 8, 23, 10, 11)
