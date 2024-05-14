@@ -92,7 +92,12 @@ class App:
             i = (i - 1) % 12
 
         if self.plateau_jeu[(num+i+1)%12] in [2, 3]:
+            u = copy.deepcopy(self.plateau_jeu)
             self.recuperation_graines((num+i+1)%12)
+            if self.plateau_jeu[0:6] == [0 for i in range(6)]:
+                self.plateau_jeu = u[0:6] + self.plateau_jeu[6:12]
+            elif self.plateau_jeu[6:12] == [0 for i in range(6)]:
+                self.plateau_jeu = self.plateau_jeu[0:6] + u[6:12]
 
 
     def recuperation_graines(self, num):
@@ -200,7 +205,6 @@ class App:
             else :
                 if self.plateau_jeu in self.old_positions:
                     self.trigger = 2
-                    self.old_positions
                 elif self.trigger == 2 :
                     self.trigger = True
 
@@ -378,7 +382,7 @@ class App:
         if not self.run:
             if self.scoreA > self.scoreB:
                 if self.mode:
-                    pyxel.text(80, 80, "Victoire AWIN : On vous win tous !", 7)
+                    pyxel.text(80, 80, "Victoire AWINLE : On les win tous !", 7)
                 else:
                     if self.dojo_i == 0:
                         pyxel.text(110, 80, f"Le 1er Maitre a gagne !", 7)

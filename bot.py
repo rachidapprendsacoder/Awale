@@ -15,67 +15,6 @@ oblo = 10
 sd = 100
 
 #global wc,ca,cl,owc,oca,ocl,ac,oac,sd
-def mutation(coefs, a_muter = [0,9] ,magn = 1):
-    coefs = copy.deepcopy(coefs)
-    for i, c in enumerate(coefs):
-        coefs[i] = c + random.randint(-10000, 10000)/10000 * magn
-    return coefs
-def value_game(situation, verif = False):
-    global tour_bot
-    plateau = situation[0]
-    score_diff = situation[2] - situation[3]
-
-    mobilite = 0
-    greniers = 0
-    blocus = 0
-    mobil_score = 0
-    len_dyn = 0
-    for i, p in enumerate(plateau[0:5]):
-
-        if i < 3:
-            if 10 + i <= p <= 12 + i + 3:
-                greniers += 1
-            else :
-                greniers -= 0.5
-        elif i != 3:
-            if 2 <= p:
-                blocus += 1
-        mobil_score += p
-        if 5 > mobil_score and p < 4:
-            len_dyn += 1
-        else :
-
-            mobilite += len_dyn
-            len_dyn = 0
-            mobil_score = 0
-
-    mobilite += len_dyn
-    res = mob * mobilite + blo * blocus
-
-    mobilite = 0
-    ogreniers = 0
-    oblocus = 0
-    mobil_score = 0
-    len_dyn = 0
-    for i, p in enumerate(plateau[6:12]):
-        if i < 3:
-            if 10 + i <= p <= 12 + i + 3:
-                ogreniers += 1
-            else :
-                ogreniers -= 0.5
-        elif i != 3:
-            if 2 <= p:
-                oblocus += 1
-        mobil_score += p
-        if 5 > mobil_score and p < 4:
-            len_dyn += 1
-        else:
-            mobilite += len_dyn
-            len_dyn = 0
-            mobil_score = 0
-
-    mobilite += len_dyn
-    return res + omob * mobilite + ogr * ogreniers + oblo * blocus + sd * score_diff + gr * greniers
 
 
 def repartition_sim(simulation, num):
@@ -86,7 +25,14 @@ def repartition_sim(simulation, num):
         i += 1
     simulation[0][num] = 0
     if simulation[0][(num - i + 1) % 12 - (i-1) // 12] in [2, 3]:
-        return recuperation_graines_sim(simulation, (num - i + 1) % 12 - (i+1) // 12)
+        u = copy.deepcopy(simulation)
+        sim = recuperation_graines_sim(simulation, (num - i + 1) % 12 - (i+1) // 12)
+
+        if sim[0:6] == [0 for i in range(6)]:
+            sim = u[0:6] + sim[6:12]
+        elif sim[6:12] == [0 for i in range(6)]:
+            sim = sim[0:6] + u[6:12]
+        return sim
     return simulation
 
 def in_game_sim(simulation,choix):
@@ -213,8 +159,8 @@ def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
         if depth_current == depth:
             return best_move
         else:
-
             return minmax_value
+
 pos_simules = {}
 nb_positions = 0
 TH_MAX = 10
@@ -234,10 +180,71 @@ def bot_move(situation,coefs = None, Ai_ = None ):
         choix = minmax(sim, True, Ai_=Ai_, depth= 6, depth_current=6)
     else :
 
-        choix = minmax(sim,True, Ai_ = Ai_, depth=3,depth_current=3)
+        choix = minmax(sim,True, Ai_ = Ai_, depth=5,depth_current=5)
     TH_MAX = 10
     th_len = 0
-    value_game(in_game_sim(sim, choix), True)
     return choix
+def mutation(coefs, a_muter = [0,9] ,magn = 1):
+    coefs = copy.deepcopy(coefs)
+    for i, c in enumerate(coefs):
+        coefs[i] = c + random.randint(-10000, 10000)/10000 * magn
+
+    return coefs
+def value_game(situation, verif = False):
+    global tour_bot
+    plateau = situation[0]
+    score_diff = situation[2] - situation[3]
+
+    mobilite = 0
+    greniers = 0
+    blocus = 0
+    mobil_score = 0
+    len_dyn = 0
+    for i, p in enumerate(plateau[0:5]):
+
+        if i < 3:
+            if 10 + i <= p <= 12 + i + 3:
+                greniers += 1
+            else :
+                greniers -= 0.5
+        elif i != 3:
+            if 2 <= p:
+                blocus += 1
+        mobil_score += p
+        if 5 > mobil_score and p < 4:
+            len_dyn += 1
+        else :
+
+            mobilite += len_dyn
+            len_dyn = 0
+            mobil_score = 0
+
+    mobilite += len_dyn
+    res = mob * mobilite + blo * blocus
+
+    mobilite = 0
+    ogreniers = 0
+    oblocus = 0
+    mobil_score = 0
+    len_dyn = 0
+    for i, p in enumerate(plateau[6:12]):
+        if i < 3:
+            if 10 + i <= p <= 12 + i + 3:
+                ogreniers += 1
+            else :
+                ogreniers -= 0.5
+        elif i != 3:
+            if 2 <= p:
+                oblocus += 1
+        mobil_score += p
+        if 5 > mobil_score and p < 4:
+            len_dyn += 1
+        else:
+            mobilite += len_dyn
+            len_dyn = 0
+            mobil_score = 0
+
+    mobilite += len_dyn
+    return res + omob * mobilite + ogr * ogreniers + oblo * blocus + sd * score_diff + gr * greniers
 
 
