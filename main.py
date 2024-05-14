@@ -95,10 +95,11 @@ class App:
         if self.plateau_jeu[(num+i+1)%12] in [2, 3]:
             u = copy.deepcopy(self.plateau_jeu)
             self.recuperation_graines((num+i+1)%12)
-            if self.plateau_jeu[0:6] == [0 for i in range(6)]:
+            '''if self.plateau_jeu[0:6] == [0 for i in range(6)]:
                 self.plateau_jeu = u[0:6] + self.plateau_jeu[6:12]
             elif self.plateau_jeu[6:12] == [0 for i in range(6)]:
-                self.plateau_jeu = self.plateau_jeu[0:6] + u[6:12]
+                self.plateau_jeu = self.plateau_jeu[0:6] + u[6:12]'''
+
 
 
     def recuperation_graines(self, num):
