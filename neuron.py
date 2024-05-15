@@ -124,16 +124,14 @@ class AiNeural:
             somme += (attendu - self._output()) ** 2
             #somme += (attendu - value_game(situation = etude)) ** 2
         return somme / lon
-    def erreur_model(self):
+    def erreur_model(self, coefs = [1.2839999999999998, 1.1365000000000003, -5.167, -3.1109999999999998, 4.173500000000001, 6.7775, 105.95000000000002]):
         somme = 0
         lon = len(self.b_d)
 
         for donnees in self.b_k:
             etude = ast.literal_eval(donnees)
             attendu = sigmoid(self.b_d[donnees] / 1000) * 200 - 100
-            self._input(etude)
-
-            somme += (attendu - (sigmoid(value_game(situation = etude) / 1000) * 200 - 100)) ** 2
+            somme += (attendu - (sigmoid(value_game(situation = etude, coefs = coefs) / 1000) * 200 - 100)) ** 2
         return somme / lon
     def deriv_poids(self,i, j, k):
         old_weight = self.weights[i][j][k]
@@ -143,18 +141,53 @@ class AiNeural:
         return derive
     def deriv_biais(self, i, j):
         old_biases = self.biases[i][j]
-        self.biases[i][j] += 0.00_1
+        self.biases[i][j] += 0.000_1
         derive = (self.erreur() - self.Ei) * 10_000
         self.biases[i][j] = old_biases
         return derive
-    def apprend(self, base_donnee, pas = 0.0004, iteration = 300):
-        old_amel = 0
-        amel = 0
-        var_pas = pas
+    def deriv_coefs(self, i):
+        old_coef = self.coefs[i]
+        self.coefs[i] += 0.000_1
+        derive = (self.erreur_model(self.coefs) - self.Ei) * 10_000
+        self.coefs[i] = old_coef
+        return derive
+    def apprend_coefs(self, base_donnee, coefs, pas = 0.004, iteration = 300):
         self.b_d = base_donnee
-        self.b_k = list(self.b_d.keys())
+        self.b_k = list(self.b_d.keys())[0:int(len(self.b_d) / 10 - 1)]
+        self.coefs = coefs
+        self.E0 = self.erreur_model(self.coefs)
+
+        for k in range(iteration):
+
+            # Taux erreur initial
+            self.Ei = self.erreur_model(self.coefs)
+            old_coefs = copy.deepcopy(self.coefs)
+            grad_coefs = []
+            for i in range(len(self.coefs)):
+                grad_coefs.append(self.deriv_coefs(i) * pas)
+
+            print(self.coefs == old_coefs)
+            self.coefs = np.subtract(coefs, np.array(grad_coefs))
+
+            # Taux erreur final
+            Ef = self.erreur_model(self.coefs)
+            amel = (self.Ei - Ef) / self.Ei * 100
+            if amel < 0:
+                self.coefs = old_coefs
+                print(self.Ei == self.erreur_model(self.coefs))
+                pas /= 5
+            elif amel < 1:
+                pas *= 2
+            print(amel)
+            print("%Amélioration total : ", (self.E0 - Ef) / self.E0 * 100, " %")
+        print(self.coefs)
+        return self.coefs
+    def apprend(self, base_donnee, pas = 0.0004, iteration = 25):
+        self.b_d = base_donnee
+        self.b_k = list(self.b_d.keys())[0:int(len(self.b_d)/10-1)]
         self.E0 = self.erreur()
         for k in range(iteration):
+
 
             # Taux erreur initial
             self.Ei = self.erreur()
@@ -268,11 +301,11 @@ def interpret_game(situation):
     return res + [(1.5 + ogreniers)/3.5, mobilite/6, blocus/2, score_diff/48, nb_graines/48]
 
     res = res + omob * mobilite + ogr * ogreniers + oblo * blocus + sd * score_diff + gr * greniers
-def value_game(situation, verif = False):
+def value_game(situation, coefs = [1.2839999999999998, 1.1365000000000003, -5.167, -3.1109999999999998, 4.173500000000001, 6.7775, 105.95000000000002], verif = False):
     global tour_bot
     plateau = situation[0]
     score_diff = situation[2] - situation[3]
-    gr, blo, mob, ogr, oblo, omob, sd = [1.2839999999999998, 1.1365000000000003, -5.167, -3.1109999999999998, 4.173500000000001, 6.7775, 105.95000000000002]
+    gr, blo, mob, ogr, oblo, omob, sd = coefs
     mobilite = 0
     greniers = 0
     blocus = 0
@@ -325,16 +358,15 @@ def value_game(situation, verif = False):
     mobilite += len_dyn
 
     return res + omob * mobilite + ogr * ogreniers + oblo * blocus + sd * score_diff + gr * greniers
-
 Herture = AiNeural(gen_mode = "copy", copy_data =
 {
-"weights" : [[[9.989278865910848, -2.5876656620334684, 3.174422470675123, 3.81, -0.8390066834812501, 1.0804224706732266, -6.317859951936865, 0.8207512970036969], [-6.250055004671212, 5.619962957980045, 0.6440771934832746, 2.54, 6.729785384722074, 4.6956534387509725, -0.08176983780306679, 0.5041204352027187], [-0.0807366178649317, -4.452631313880568, -4.391155990125146, 0.0, -7.944495481086331, -4.391155990125146, 10.07511403614601, 0.03129668734690881]]
-,[[8.870362468410699, -8.81562009729283, 18.878469109752356]]
+"weights" : [[[9.988688951579123, -2.5185592005958584, 3.2564468205148884, 3.81, -0.7034449800344982, 1.1624468205121279, -6.231925461652511, 0.8655940595669407], [-6.1542032665481, 6.826405662986882, 0.583585786723443, 2.54, 8.055639625630173, 4.635162031991335, -0.10403230899169019, 0.5049531917446006], [-0.08837294253807634, -6.066616744154116, -4.374044921227408, 0.0, -9.597464662883734, -4.374044921227501, 10.10472926919896, 0.04450136922607149]]
+,[[8.545755178346583, -8.599163672128093, 18.531120137865088]]
 ],
 "biases" : [[6.52, -0.3, 0]
 ,[0]
 ]
-} )
-
+})
 #Changer souvent entre dic_end, dic_ouv, dic_mid surtout si l'amélioration est médiocre
-Herture.apprend(dic_ouv())
+#Herture.apprend_coefs(dic_mid(),[ 13.67639652  , 1.37887062 , 15.79317548 , -3.71860348 , -3.93112938,
+#  -5.58434216, 105.91352681])

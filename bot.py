@@ -2,7 +2,6 @@ import random
 import neuron as ne
 import time
 import copy
-import threading
 # bot
 gr = 10 # case à kroue
 mob = 10 # case à kroue perime
@@ -25,13 +24,15 @@ def repartition_sim(simulation, num):
         i += 1
     simulation[0][num] = 0
     if simulation[0][(num - i + 1) % 12 - (i-1) // 12] in [2, 3]:
-        u = copy.deepcopy(simulation)
+        u = copy.deepcopy(simulation[0])
+        s = simulation[2], simulation[3]
         sim = recuperation_graines_sim(simulation, (num - i + 1) % 12 - (i+1) // 12)
-
-        if sim[0:6] == [0 for i in range(6)]:
-            sim = u[0:6] + sim[6:12]
-        elif sim[6:12] == [0 for i in range(6)]:
-            sim = sim[0:6] + u[6:12]
+        if sim[0][0:6] == [0 for i in range(6)]:
+            sim[0] = u[0:6] + sim[0][6:12]
+            simulation[2], simulation[3] = s
+        elif sim[0][6:12] == [0 for i in range(6)]:
+            sim[0] = sim[0][0:6] + u[6:12]
+            simulation[2], simulation[3] = s
         return sim
     return simulation
 
@@ -87,24 +88,13 @@ def legal_moves(simulation, tour):
 
     return legalmoves
 
-def evaluation(sim, simulation, max, depth, depth_current, Ai_ = None):
-    global nb_positions
 
-    if str(sim) in pos_simules.keys():
-        return pos_simules[str(sim)]
-    else:
-        if abs(simulation[2] - simulation[3]) <= 13 or nb_positions < 100000:
-            val = minmax(sim, not max, depth=depth, depth_current=depth_current - 1, Ai_=Ai_)
-            pos_simules[str(sim)] = val
-            return val
-        else:
-            val = (simulation[2] - simulation[3]) * sd * 2
-            pos_simules[str(sim)] = val
-            return val
 
-def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
+def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None, alpha = None, beta = None):
     global nb_positions, sd, pos_simules
     global TH_MAX, th_len
+
+    new_alpha, new_beta = alpha, beta
     nb_positions += 1
     # Si max == True : le tour du robot
     plateau = simulation[0]
@@ -115,27 +105,55 @@ def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
         if Ai_ is None:
             return value_game(simulation)
         else:
-            Ai_._input(simulation[0] + [simulation[3] - simulation[2]] + [simulation[3] + simulation[2]])
+            Ai_._input(simulation)
             return Ai_._output()
-    else :
+    else:
         values = {}
-        th_liste = []
+        sims = []
+
         for move in lm:
+
             sim = in_game_sim(copy.deepcopy(simulation), move)
-            if TH_MAX > th_len:
-                th = threading.Thread(target = evaluation, args = (sim, simulation, max, depth, depth_current, Ai_))
-                th_liste.append((str(sim), move, th))
-                th.start()
-                th_len += 1
+
+            sims.append(((move,  copy.deepcopy(sim)), value_game(sim)))
+        if max :
+            sims = sorted(sims, key=lambda x: x[1])[::-1]
+        else :
+            sims = sorted(sims, key=lambda x: x[1])
+        for data in (i[0] for i in sims):
+            move, sim = data
+
+            if str(sim) in pos_simules.keys():
+                if depth != depth_current:
+                    return pos_simules[str(sim)]
             else:
-                values[move] = evaluation(sim,simulation, max, depth, depth_current, Ai_)
+                val = minmax(sim, not max, depth=depth, depth_current=depth_current - 1, Ai_=Ai_, alpha = new_alpha, beta = new_beta)
 
-        if th_liste != []:
-            for sim, move, th in th_liste:
+                if max:
+                    # Alpha prend la valeur de position le plus faible que les neveux puisse prendre
+                    # Plutot pour les positions juste précédemment choisies par le robot
+                    if alpha is None:
+                        new_alpha = val
+                    else:
+                        if alpha < val:
+                            new_alpha = val
+                        elif not beta is None:
+                            if val > beta:
+                                return val
+                else:
+                    # Beta prend la valeur de position le plus haut que les neveux puisse prendre
+                    # Plutot pour les positions juste précédemment choisies par le joueur
+                    if beta is None:
+                        new_beta = val
+                    else:
+                        if beta > val:
+                            new_beta = val
+                        elif not alpha is None:
+                            if val < alpha:
+                                return val
 
-                th.join()
-                th_len -= 1
-                values[move] = pos_simules[sim]
+                pos_simules[str(sim)] = val
+                values[move] = val
 
         minmax_value = None
         best_move = None
@@ -157,15 +175,14 @@ def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
                     best_move = move
                     minmax_value = value
         if depth_current == depth:
+            print("estimation de la gagne : ", minmax_value, best_move)
             return best_move
         else:
             return minmax_value
 
 pos_simules = {}
 nb_positions = 0
-TH_MAX = 12
-th_len = 0
-def bot_move(situation,coefs = None, Ai_ = None ):
+def bot_move(situation,coefs = None, Ai_ = None, dico_get = False):
     global gr, blo, mob, ogr, oblo, omob, sd
     global nb_positions, pos_simules
     pos_simules = {}
@@ -177,13 +194,15 @@ def bot_move(situation,coefs = None, Ai_ = None ):
     else :
         sim = copy.deepcopy([situation[0][6:12]+situation[0][0:6],True,situation[3],situation[2]])
     if situation[2]+situation[3] > 40:
-        choix = minmax(sim, True, Ai_=Ai_, depth= 6, depth_current=6)
+        choix = minmax(sim, True, Ai_=Ai_, depth= 10, depth_current=10)
     else :
+        choix = minmax(sim,True, Ai_ = Ai_, depth=7,depth_current=7)
+    print(nb_positions)
 
-        choix = minmax(sim,True, Ai_ = Ai_, depth=6,depth_current=6)
-    TH_MAX = 12
-    th_len = 0
-    return choix
+    if dico_get:
+        return choix, pos_simules
+    else:
+        return choix
 def mutation(coefs, a_muter = [0,9] ,magn = 1):
     coefs = copy.deepcopy(coefs)
     for i, c in enumerate(coefs):
@@ -247,4 +266,56 @@ def value_game(situation, verif = False):
     mobilite += len_dyn
     return res + omob * mobilite + ogr * ogreniers + oblo * blocus + sd * score_diff + gr * greniers
 
+def TEST(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
+    global nb_positions, sd, pos_simules
+    pos_simules = {}
+    nb_positions += 1
+    # Si max == True : le tour du robot
+    plateau = simulation[0]
+    tour = simulation[1]
+    lm = legal_moves([plateau[:6], plateau[12:5:-1]], tour)
+    if depth_current <= 0 or lm == []:
+        # Si la simulation est fini ou profondeur atteint
+        if Ai_ is None:
+            return value_game(simulation)
+        else:
+            Ai_._input(simulation[0] + [simulation[3] - simulation[2]] + [simulation[3] + simulation[2]])
+            return Ai_._output()
+    else:
+        values = {}
+        for move in lm:
+            sim = in_game_sim(copy.deepcopy(simulation), move)
+            if str(sim) in pos_simules.keys():
+                return pos_simules[str(sim)]
+            else:
+                val = TEST(sim, not max, depth=depth, depth_current=depth_current - 1, Ai_=Ai_)
 
+                pos_simules[str(sim)] = val
+                values[move] = val
+                if depth == depth_current:
+                    print(val)
+
+        minmax_value = None
+        best_move = None
+
+        if max:
+            for move, value in values.items():
+                if minmax_value is None:
+                    best_move = move
+                    minmax_value = value
+                elif minmax_value < value:
+                    best_move = move
+                    minmax_value = value
+        else:
+            for move, value in values.items():
+                if minmax_value is None:
+                    best_move = move
+                    minmax_value = value
+                elif minmax_value > value:
+                    best_move = move
+                    minmax_value = value
+        if depth_current == depth:
+            print("estimation de la gagne TEST: ", minmax_value, best_move)
+            return best_move
+        else:
+            return minmax_value
