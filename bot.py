@@ -93,7 +93,7 @@ def evaluation(sim, simulation, max, depth, depth_current, Ai_ = None):
     if str(sim) in pos_simules.keys():
         return pos_simules[str(sim)]
     else:
-        if abs(simulation[2] - simulation[3]) <= 10 or nb_positions < 100000:
+        if abs(simulation[2] - simulation[3]) <= 13 or nb_positions < 100000:
             val = minmax(sim, not max, depth=depth, depth_current=depth_current - 1, Ai_=Ai_)
             pos_simules[str(sim)] = val
             return val
@@ -115,7 +115,7 @@ def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
         if Ai_ is None:
             return value_game(simulation)
         else:
-            Ai_._input(simulation[0] + [simulation[1]] + [simulation[2]] + [simulation[3]])
+            Ai_._input(simulation[0] + [simulation[3] - simulation[2]] + [simulation[3] + simulation[2]])
             return Ai_._output()
     else :
         values = {}
@@ -163,7 +163,7 @@ def minmax(simulation,max, depth = 4, depth_current = 4, Ai_ = None):
 
 pos_simules = {}
 nb_positions = 0
-TH_MAX = 10
+TH_MAX = 12
 th_len = 0
 def bot_move(situation,coefs = None, Ai_ = None ):
     global gr, blo, mob, ogr, oblo, omob, sd
@@ -180,8 +180,8 @@ def bot_move(situation,coefs = None, Ai_ = None ):
         choix = minmax(sim, True, Ai_=Ai_, depth= 6, depth_current=6)
     else :
 
-        choix = minmax(sim,True, Ai_ = Ai_, depth=5,depth_current=5)
-    TH_MAX = 10
+        choix = minmax(sim,True, Ai_ = Ai_, depth=6,depth_current=6)
+    TH_MAX = 12
     th_len = 0
     return choix
 def mutation(coefs, a_muter = [0,9] ,magn = 1):
