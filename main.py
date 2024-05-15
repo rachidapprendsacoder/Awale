@@ -23,6 +23,7 @@ li_coefs_maitres = [[0, 0, 0, 0, 0, 0, 100],
                     [1.2839999999999998, 1.1365000000000003, -5.167, -3.1109999999999998, 4.173500000000001, 6.7775, 105.95000000000002]]
 
 
+
 mode = int(input("mode 1-joueur, 0-apprentissage : ")) == 1
 def convertisseur(simu, type):
     if type=='jeu':
@@ -94,10 +95,11 @@ class App:
         if self.plateau_jeu[(num+i+1)%12] in [2, 3]:
             u = copy.deepcopy(self.plateau_jeu)
             self.recuperation_graines((num+i+1)%12)
-            if self.plateau_jeu[0:6] == [0 for i in range(6)]:
+            '''if self.plateau_jeu[0:6] == [0 for i in range(6)]:
                 self.plateau_jeu = u[0:6] + self.plateau_jeu[6:12]
             elif self.plateau_jeu[6:12] == [0 for i in range(6)]:
-                self.plateau_jeu = self.plateau_jeu[0:6] + u[6:12]
+                self.plateau_jeu = self.plateau_jeu[0:6] + u[6:12]'''
+
 
 
     def recuperation_graines(self, num):
@@ -331,6 +333,11 @@ class App:
                 pyxel.text(340, 50, '1er M.:', 7)
             else :
                 pyxel.text(340, 50, f'{self.dojo_i+1}eme M.:', 7)
+        #Corners
+        pyxel.blt(22, 35, 0, 176, 0, 15, 15, 0)
+        pyxel.blt(22, 130, 0, 176, 16, 15, 15, 0)
+        pyxel.blt(247, 35, 0, 192, 0, 15, 15, 0)
+        pyxel.blt(247, 130, 0, 192, 16, 15, 15, 0)
 
         pyxel.text(380, 50, str(self.scoreA), 7)
         pyxel.text(310, 50, str(self.scoreB), 7)
@@ -372,6 +379,8 @@ class App:
 
         plateau2_x = 280
         pyxel.blt(plateau2_x, plateau1_y, 0, 128, 0, 48, 48, 0)
+
+
 
         if 8<pyxel.mouse_x<31 and 8<pyxel.mouse_y<18:
             pyxel.rect(8, 8, 23, 10, 11)
